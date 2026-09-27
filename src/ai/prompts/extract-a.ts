@@ -7,6 +7,9 @@ Rules:
 - Use only these DSL functions in "when"/"require" formula strings: and, or, not, implies, eq, ne, lt, le, gt, ge, add, is(var, value).
 - Identifiers are lowercase snake_case, max 48 chars.
 - Prefer few, precise variables over many redundant ones.
+- Every variable object must include "min", "max", and "values", even when not applicable to its
+  sort: use min:0, max:0, values:[] for a "bool" variable; min:0, max:0 for an "enum" variable;
+  values:[] for an "int" variable. Only the fields matching the variable's own sort are read.
 - Output strict JSON matching the provided schema. No prose, no markdown fences.`;
 
 export interface SpanInput {
