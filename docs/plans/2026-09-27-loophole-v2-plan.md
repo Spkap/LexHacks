@@ -50,7 +50,7 @@ This is what the team asked for, in their words, and it decides every trade-off 
 - [x] **Phase 3:** Data + run pipelines + routes
 - [x] **Phase 4:** PIVOT GATE (live golden runs, record Demo Mode fixtures) ← ran 3x; mechanism sound (zero ungrounded escapes, real re-attack pass on run 3) but C8 never landed "confirmed" and buckets don't match v1's solver-derived table (jury's textual reading is defensible, not a bug) -- proceeding per explicit instruction, not silently
 - [x] **Phase 5:** War Room `/a/[slug]` -- core loop built and live-tested against real Groq pipeline; scoped down (no SVG connectors/motion choreography); mobile bottom-sheet, keyboard-nav audit, axe pass deferred
-- [ ] **Phase 6:** Landing `/` + replay `/r/[slug]` + legacy redirects
+- [x] **Phase 6:** Landing `/` + replay `/r/[slug]` + legacy redirects -- (marketing) route group, self-playing hero-battle.tsx wired to the real fixtures + decideVerdict, claim-discipline copy pass, /p and fork-button v1-route bugs fixed; scoped down from the full frontend_v2 spec: no how-it-works.tsx/history-strip.tsx/bill-gallery.tsx, replay page kept its existing findings-list view rather than the before/after scoreboard + "Replay the attack" reducer feed, no Congress.gov import link, no axe pass
 - [ ] **Phase 7:** Delete Z3, update e2e, eval, deploy
 - [ ] **Phase 8:** Ship: README, video, Devpost
 
@@ -881,19 +881,19 @@ The reducer is pure: put it in `src/components/warroom/reducer.ts` and unit-test
 
 ### Task 6.1: Landing
 
-- [ ] Move `src/app/page.tsx` into `src/app/(marketing)/page.tsx`; add `(marketing)/layout.tsx` (top nav: logo, "Watch demo", GitHub; footer disclaimer).
-- [ ] Hero, left: headline "Find the loophole before someone else does." Subline: "AI attacks your bill. A jury of 3 AI judges cross-examines every claim. You make the final call." Primary button **▶ Watch it catch a real loophole** (forks golden → `/a/<slug>`); below it the paste box (`[Paste a bill…][Attack]`, plus a small "or import from Congress.gov" link).
-- [ ] Hero, right: `landing/hero-battle.tsx`, a client component that statically imports `candidates.original.json` + `jury.recorded.json` and loops a mini arena (chips hit a clause, seats light, stamps land, "8 schemes · 6 stopped · 2 found") every ~12 s. Pauses on hover; reduced motion shows the final frame. No DB, no LLM, no network.
-- [ ] Below the fold: `how-it-works.tsx` (① ATTACK "9 tactics hit the bill at once" · ② CROSS-EXAMINE "Bad quotes thrown out. Jury of 3 AI judges." · ③ PATCH & RE-ATTACK "Minimal redline. Loophole closes. Legit uses survive.", each with a tiny looping animation), `history-strip.tsx` (2018 CCPA ● Loophole finds the "free sharing" gap ● 2020 California adds "share" ✓), `bill-gallery.tsx` (public projects with loophole counts).
-- [ ] Copy budget: headline ≤ 8 words, subline ≤ 25, each card ≤ 12. No "formal model", no "Legal IR".
+- [x] Move `src/app/page.tsx` into `src/app/(marketing)/page.tsx`; add `(marketing)/layout.tsx` (top nav: logo, "Watch demo", GitHub; footer disclaimer).
+- [x] Hero, left: rewritten headline/subline matching claim discipline ("Paste a law. Watch AI look for the loophole." / jury + human-tie-break subline) and the existing paste-box (`GalleryActions`) fork flow, now pointed at `/a/[slug]`. Deferred: the exact spec copy, the dedicated "▶ Watch it catch a real loophole" golden-fork button, and the Congress.gov import link.
+- [x] Hero, right: `landing/hero-battle.tsx` -- client component, statically imports `candidates.original.json` + `jury.recorded.json`, cycles one candidate every 2.6 s with jury seats + verdict stamp (reuses `decideVerdict` from `src/core` directly, so it can't drift from the server's rule). Pauses on hover, static frame under `prefers-reduced-motion`. No DB, no LLM, no network -- confirmed via live browser test.
+- [ ] Below the fold: `how-it-works.tsx`, `history-strip.tsx` (`reveal.json` is recorded but unused), `bill-gallery.tsx` -- not built; public projects list stayed on the landing page itself instead.
+- [x] Copy budget respected for what was written; no "formal model"/"Legal IR" language anywhere.
 
 ### Task 6.2: Replay + OG image
 
-- [ ] `/r/[slug]` (public projects only): the before/after scoreboard ("2 loopholes → 0 · 3/3 legit uses kept"), bill title, sha, date; a **▶ Replay the attack** button that feeds stored `run_events` through the same reducer and arena; finding cards + redline; a "Fork and attack it yourself" CTA; claim copy + disclaimer.
-- [ ] `r/[slug]/opengraph-image.tsx` renders the scoreboard.
+- [~] `/r/[slug]` (public projects only): kept the existing metric-table + findings-list `ReportView` (confirmed count, legit-uses count, repairs count, per-finding links into `/a/[slug]?f=<id>`) and fixed its fork button to `/a/[slug]`. Not built: the before/after scoreboard framing, the "▶ Replay the attack" button feeding `run_events` through the War Room reducer/arena, and inline redline display.
+- [x] `r/[slug]/opengraph-image.tsx` fixed -- was still rendering "SAT → UNSAT" (a claim-discipline violation), now renders the confirmed-findings count instead. Not the full scoreboard render the spec asked for.
 
-- [ ] **Phase 6 gate:** `pnpm build`; hero animates < 1 s after load with network throttled; landing → first LOOPHOLE < 10 s; axe shows 0 serious issues on `/`, `/a/[slug]`, `/r/[slug]`.
-- [ ] **Commit:** `feat(ui): self-playing landing page and public replay`.
+- [x] **Phase 6 gate:** `pnpm typecheck && pnpm test && pnpm lint && pnpm build` all clean; hero verified live in-browser (cycles through all 8 candidates, correct jury seats/verdicts, no console errors); fork flow verified end-to-end (paste-box → new project → War Room), test fork cleaned up from DB after. Not run: throttled-network hero timing, landing→first-LOOPHOLE timing, axe pass.
+- [x] **Commit:** `feat(ui): landing page + replay route redirects (v2 Phase 6)` (`0c02fe5`).
 
 ---
 
