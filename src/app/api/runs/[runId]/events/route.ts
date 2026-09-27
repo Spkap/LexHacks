@@ -42,7 +42,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ runI
 
         for (const event of events) {
           lastSeq = event.seq;
-          const data = JSON.stringify({ stage: event.stage, payload: event.payload });
+          const data = JSON.stringify(event.payload);
           controller.enqueue(encoder.encode(`id: ${event.seq}\ndata: ${data}\n\n`));
           lastFlush = Date.now();
         }

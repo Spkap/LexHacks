@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray } from 'drizzle-orm';
-import type { PurposeContract, Span } from '@/core/contracts';
+import type { EffectiveStatus, PurposeContract, Span } from '@/core/contracts';
 import { effectiveStatus } from '@/core/verdict';
 import { db } from '@/db/client';
 import { attackCandidates, findingRulings, findings, purposeContracts, repairs, runs, sourceSpans, sources } from '@/db/schema';
@@ -22,7 +22,7 @@ export async function loadWarRoomData(slug: string) {
   });
   const purpose = purposeRow?.contract as PurposeContract | undefined;
 
-  let latestAttack: { runId: string; candidates: (typeof attackCandidates.$inferSelect)[]; findings: Array<typeof findings.$inferSelect & { effectiveStatus: string }> } | null = null;
+  let latestAttack: { runId: string; candidates: (typeof attackCandidates.$inferSelect)[]; findings: Array<typeof findings.$inferSelect & { effectiveStatus: EffectiveStatus }> } | null = null;
   if (source) {
     const attackRun = await db.query.runs.findFirst({
       where: and(eq(runs.projectId, project.id), eq(runs.type, 'attack')),
