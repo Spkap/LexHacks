@@ -36,6 +36,7 @@ export function WarRoom({ initial }: { initial: WarRoomInitial }) {
   const [runId, setRunId] = useState<string | null>(null);
   const [purpose, setPurpose] = useState(initial.purpose);
   const [purposeSheetOpen, setPurposeSheetOpen] = useState(false);
+  const mode = searchParams.get("demo") === "1" ? "demo" : "live";
 
   const onEvent = useCallback((event: RunEventPayload) => dispatch({ type: "event", event }), []);
   useRunEvents(runId, onEvent);
@@ -62,7 +63,7 @@ export function WarRoom({ initial }: { initial: WarRoomInitial }) {
     const res = await fetch(`/api/projects/${initial.project.id}/attack-runs`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "live" }),
+      body: JSON.stringify({ mode }),
     });
     const data = await res.json();
     if (res.ok) setRunId(data.runId);
@@ -114,6 +115,7 @@ export function WarRoom({ initial }: { initial: WarRoomInitial }) {
           chip={patchChip}
           checks={state.checks}
           patched={state.patched}
+          mode={mode}
           onEvent={onEvent}
           onPatched={() => dispatch({ type: "patched" })}
         />

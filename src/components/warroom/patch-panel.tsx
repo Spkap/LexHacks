@@ -17,6 +17,7 @@ interface Props {
   chip: Chip;
   checks: WarRoomState["checks"];
   patched: boolean;
+  mode: "demo" | "live";
   onEvent: (event: RunEventPayload) => void;
   onPatched: () => void;
 }
@@ -30,7 +31,7 @@ async function pollRun(runId: string): Promise<{ status: string; result: unknown
   }
 }
 
-export function PatchPanel({ projectId, chip, checks, patched, onEvent, onPatched }: Props) {
+export function PatchPanel({ projectId, chip, checks, patched, mode, onEvent, onPatched }: Props) {
   const [repairRunId, setRepairRunId] = useState<string | null>(null);
   const [retestRunId, setRetestRunId] = useState<string | null>(null);
   const [proposals, setProposals] = useState<RepairResult[]>([]);
@@ -47,7 +48,7 @@ export function PatchPanel({ projectId, chip, checks, patched, onEvent, onPatche
     const res = await fetch(`/api/projects/${projectId}/repair-runs`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ findingId: chip.findingId, mode: "live" }),
+      body: JSON.stringify({ findingId: chip.findingId, mode }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -67,7 +68,7 @@ export function PatchPanel({ projectId, chip, checks, patched, onEvent, onPatche
     });
     if (res.ok) {
       onPatched();
-      const retest = await fetch(`/api/repairs/${repairId}/retest-runs`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "live" }) });
+      const retest = await fetch(`/api/repairs/${repairId}/retest-runs`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode }) });
       const retestData = await retest.json();
       if (retest.ok) setRetestRunId(retestData.runId);
     }
@@ -75,7 +76,11 @@ export function PatchPanel({ projectId, chip, checks, patched, onEvent, onPatche
   }
 
   async function tryLazyFix(repairId: string) {
-    const res = await fetch(`/api/repairs/${repairId}/dry-run`, { method: "POST" });
+    const res = await fetch(`/api/repairs/${repairId}/dry-run`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode, lazy: mode === "demo" }),
+    });
     const data = await res.json();
     if (res.ok) setLazyResult(data.results);
   }
@@ -101,7 +106,7 @@ export function PatchPanel({ projectId, chip, checks, patched, onEvent, onPatche
                   {approvingId === p.repairId ? "Approving…" : "Approve patch"}
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => tryLazyFix(p.repairId)}>
-                  Try the lazy fix
+                  {mode === "demo" ? "Try the lazy fix" : "Check legitimate uses"}
                 </Button>
               </div>
             </div>

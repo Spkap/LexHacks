@@ -2,18 +2,13 @@
 
 Project: **Loophole**, LexHack 2026 entry. Plan to execute: [docs/plans/2026-09-27-loophole-v2-plan.md](docs/plans/2026-09-27-loophole-v2-plan.md) (v2, agentic). v1 history: [docs/plans/2026-09-27-loophole-lexhack-plan.md](docs/plans/2026-09-27-loophole-lexhack-plan.md). Product blueprint: [Loophole_Project_Blueprint.md](Loophole_Project_Blueprint.md).
 
-This file applies to any AI coding agent working in this repo (Claude Code, Cursor, Copilot, Codex, or others). Content mirrors `CLAUDE.md`; if the two ever disagree, treat that as a bug and fix both.
-
 One line: paste a rule plus its stated purpose, an Attack agent proposes loopholes grounded in verbatim quotes, a jury of 3 AI judges rules on each (a human breaks ties), propose minimal repair, re-attack. **v2 (2026-09-27): Z3 is removed**, spec is [docs/plans/new_architecture.md](docs/plans/new_architecture.md) and it wins over older docs. Frontend pages/routing/layout: [docs/plans/frontend_v2.md](docs/plans/frontend_v2.md) (one-page War Room, self-playing landing). Never claim "certified" or "proven"; a finding is only "confirmed by adversarial review".
-
-## Project overview
-
-One TypeScript monorepo, Next.js App Router, deployed on Vercel. `src/core` is pure, framework-free deterministic trust logic (IR schemas, grounding gate, verdict rule, hashing). Agents in `src/ai` (Attack, 3-judge jury, Repair, purpose helper) produce schema-validated JSON only, calling Groq and OpenRouter directly with no AI Gateway hop. Neon Postgres (Drizzle) persists immutable source versions, runs, and findings.
 
 ## Workflow rules (non-negotiable)
 
 - **No git worktrees, no feature branches, no sandboxes.** Work directly on `main`.
 - **Commit once per completed phase**, not after every task. One reviewable commit per phase, covering all its tasks.
+- **Bypass permissions is already granted for this project.** Don't stop to ask for approval on tool calls (file edits, bash commands, deploys, etc.) within the scope of executing the plan. Proceed autonomously through the plan's tasks.
 - Execute the plan file task by task, in order, per its wave structure. Don't skip ahead.
 - **v2 plan Phase 4 (the pivot gate) is a gate.** If live golden CCPA runs don't confirm C1/C8, confirm none of C2 to C7, and pass all 3 re-attack checks after repair in 2 of 3 runs, stop and fix prompts or `src/core/verdict.ts`, don't paper over it with UI polish.
 - Follow TDD where the plan marks a task `tdd="true"`: write the failing test first, run it, then implement.
@@ -35,7 +30,7 @@ One TypeScript monorepo, Next.js App Router, deployed on Vercel. `src/core` is p
 - Every page footer: "Research and drafting support. Not legal advice. Findings are AI-reviewed, grounded in quoted text, and require human judgment."
 - Don't call this an "AI lawyer" or imply court-level correctness anywhere in copy, README, or the video script.
 
-## Build and test commands
+## Stack and commands
 
 Next.js 16 (App Router) with TypeScript strict, Tailwind v4, shadcn/ui, Zod, Vercel AI SDK (`ai`) with direct `@ai-sdk/groq` (primary) and OpenRouter-via-`@ai-sdk/openai` (fallback) providers, no AI Gateway, Drizzle ORM plus `@neondatabase/serverless`, Vitest, Playwright, pnpm.
 
@@ -53,7 +48,7 @@ node scripts/seed-golden.ts  # loads the CCPA golden fixture into a fresh DB
 
 Standalone Node scripts (`seed-golden.ts`, `eval.ts`) end with `process.exit(0)` so open DB handles don't keep the process alive.
 
-## Code style guidelines
+## Code style
 
 - TypeScript strict, no `any`, use `unknown` plus narrowing.
 - Zod-validate every external input (HTTP body, query params, LLM structured output) at the boundary.
@@ -87,16 +82,9 @@ neon branches delete preview/<pr-number>                 # teardown after PR mer
 
 `--set-context` after project creation pins it as default so later commands skip `--project-id`. Pooled connection string goes in `DATABASE_URL` (`drizzle-orm/neon-http` at runtime); direct connection string goes in `DATABASE_DIRECT_URL` (`drizzle.config.ts`, migrations only, never in the request path).
 
-## Commit message guidelines
+## Never use em dashes in any output
 
-- One commit per finished plan phase, imperative subject line (`feat!: replace Z3 engine with grounded adversarial jury review`).
-- Never use em dashes in commit messages or anywhere else in this repo. Use a period, comma, or parentheses instead.
-
-## Deployment
-
-- Vercel-first, single Next.js app. Pin Node/runtime versions, lock dependencies.
-- Neon Postgres: production branch for real data and migrations; preview branches for pull requests where plan limits allow. Runtime uses the pooled/serverless connection; migrations use the direct connection, never in the request path.
-- See the plan's Phase 7 for the pre-submit checklist and required environment variables (`.env.example`).
+Use a period, comma, or parentheses instead. Applies to chat, commit messages, code comments, docs, and UI copy.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

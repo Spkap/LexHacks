@@ -117,6 +117,28 @@ async function checkLegitUses(input: RetestInput, emit: Emit): Promise<CheckResu
 
 export async function runRetestPipeline(input: RetestInput, emit: Emit): Promise<RetestSummary> {
   if (input.mode === 'demo' && input.demoResult) {
+    const { loopholesBefore, loopholesAfter, legitKept, legitTotal } = input.demoResult;
+    await emit('check.done', {
+      stage: 'check.done',
+      check: 'old_loopholes',
+      pass: loopholesAfter === 0,
+      pending: 0,
+      detail: `${loopholesBefore - loopholesAfter}/${loopholesBefore} old loopholes closed`,
+    });
+    await emit('check.done', {
+      stage: 'check.done',
+      check: 'fresh_attack',
+      pass: input.demoResult.pass,
+      pending: 0,
+      detail: input.demoResult.pass ? '0 confirmed, 0 contested on the patched text' : 'recorded re-attack did not pass',
+    });
+    await emit('check.done', {
+      stage: 'check.done',
+      check: 'legit_uses',
+      pass: legitKept === legitTotal,
+      pending: 0,
+      detail: `${legitKept}/${legitTotal} legitimate uses kept`,
+    });
     await emit('run.summary', { stage: 'run.summary', counts: input.demoResult as unknown as Record<string, number> });
     return input.demoResult;
   }

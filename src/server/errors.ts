@@ -1,11 +1,19 @@
 import { randomUUID } from 'node:crypto';
 import { ZodError } from 'zod';
-import { GateError } from '@/core/engine';
 import { CongressApiError } from './congress';
 
 export class NotFoundError extends Error {}
 export class ForbiddenError extends Error {}
 export class RateLimitError extends Error {}
+
+export class GateError extends Error {
+  constructor(
+    public code: 'PURPOSE_NOT_APPROVED',
+    public detail: string[],
+  ) {
+    super(code);
+  }
+}
 
 export interface HttpError {
   status: number;

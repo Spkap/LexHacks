@@ -65,7 +65,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ rep
 
     const patchedSpans: Span[] = await db.query.sourceSpans.findMany({ where: eq(sourceSpans.sourceId, patchedSource.id) });
 
-    const inputHash = hashOf({ repairId });
+    const inputHash = hashOf({ repairId, mode: body.mode });
 
     const useDemoFixtures = body.mode === 'demo' && project.demoTemplate === 'ccpa-2018';
     const demoResult = useDemoFixtures ? loadDemoRetest() : undefined;

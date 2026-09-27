@@ -54,7 +54,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
       .filter((f) => f.id !== findingRow.id && isLoophole(f.verdict))
       .map((f) => ({ proposal: f.proposal as AttackProposal }));
 
-    const inputHash = hashOf({ findingId: body.findingId });
+    const inputHash = hashOf({ findingId: body.findingId, mode: body.mode });
 
     const useDemoFixtures = body.mode === 'demo' && project.demoTemplate === 'ccpa-2018';
     const demoProposals = useDemoFixtures ? loadDemoRepairProposals() : undefined;
