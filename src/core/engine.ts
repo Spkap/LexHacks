@@ -37,7 +37,7 @@ function findInvariant(p: PurposeContract, invariantId: string) {
   return invariant;
 }
 
-function pick(obj: Record<string, boolean | number | string>, keys: string[]): Pins {
+export function pick(obj: Record<string, boolean | number | string>, keys: string[]): Pins {
   const out: Record<string, boolean | number | string> = {};
   for (const k of keys) if (k in obj) out[k] = obj[k];
   return out;

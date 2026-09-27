@@ -102,6 +102,45 @@ export const Candidate = z.object({
   targetInvariantId: z.string(),
 });
 
+export const RedlineEdit = z.object({
+  sectionPath: z.string(),
+  before: z.string(),
+  after: z.string(),
+});
+export const IrPatch = z.object({
+  addDefinitions: z.array(Definition).default([]),
+  replaceRules: z.array(Rule).default([]),
+});
+export const RepairProposal = z.object({
+  title: z.string().max(200),
+  redline: z.array(RedlineEdit).min(1),
+  irPatch: IrPatch,
+  rationale: z.string().max(1000),
+});
+
+/**
+ * Applies a repair proposal's IR patch to a formalization: definitions are merged by
+ * name (replaced if already present, appended otherwise), rules are merged by id the
+ * same way. Everything else (vars, id, sourceId) is carried over unchanged.
+ */
+export function applyIrPatch(base: Formalization, patch: z.infer<typeof IrPatch>): Formalization {
+  const definitions = [...base.definitions];
+  for (const def of patch.addDefinitions) {
+    const i = definitions.findIndex((d) => d.name === def.name);
+    if (i >= 0) definitions[i] = def;
+    else definitions.push(def);
+  }
+
+  const rules = [...base.rules];
+  for (const rule of patch.replaceRules) {
+    const i = rules.findIndex((r) => r.id === rule.id);
+    if (i >= 0) rules[i] = rule;
+    else rules.push(rule);
+  }
+
+  return { ...base, definitions, rules };
+}
+
 export type VarDecl = z.infer<typeof VarDecl>;
 export type Definition = z.infer<typeof Definition>;
 export type Rule = z.infer<typeof Rule>;
@@ -111,6 +150,10 @@ export type PurposeContract = z.infer<typeof PurposeContract>;
 export type Fixture = z.infer<typeof Fixture>;
 export type Candidate = z.infer<typeof Candidate>;
 export type Pins = z.infer<typeof Pins>;
+export type Tactic = z.infer<typeof Tactic>;
+export type RedlineEdit = z.infer<typeof RedlineEdit>;
+export type IrPatch = z.infer<typeof IrPatch>;
+export type RepairProposal = z.infer<typeof RepairProposal>;
 
 export type ValidationResult = { ok: true } | { ok: false; reasons: string[] };
 
