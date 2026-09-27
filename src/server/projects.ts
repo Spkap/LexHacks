@@ -1,8 +1,8 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { sha256Hex } from '@/core/canonical';
 import { db } from '@/db/client';
-import { formalizations, projects, purposeContracts, sources, sourceSpans, testFixtures } from '@/db/schema';
+import { auditEvents, formalizations, projects, purposeContracts, sources, sourceSpans, testFixtures } from '@/db/schema';
 import { logAudit } from './audit';
 import { splitIntoSpans } from './paste-split';
 
@@ -20,34 +20,57 @@ export async function getProjectBySlug(slug: string) {
 export const GOLDEN_PROJECT_SLUG = GOLDEN_SLUG;
 
 export async function forkGoldenProject(workspaceId: string): Promise<{ projectId: string; slug: string }> {
-  const golden = await db.query.projects.findFirst({ where: eq(projects.slug, GOLDEN_SLUG) });
-  if (!golden) throw new Error(`golden benchmark project '${GOLDEN_SLUG}' is not seeded`);
+  const [sourceRows, spanRows, purposeRows, formalizationRows, fixtureRows] = await db.batch([
+    db.select({ goldenId: projects.id, source: sources })
+      .from(sources)
+      .innerJoin(projects, eq(sources.projectId, projects.id))
+      .where(eq(projects.slug, GOLDEN_SLUG))
+      .limit(1),
+    db.select({ span: sourceSpans })
+      .from(sourceSpans)
+      .innerJoin(sources, eq(sourceSpans.sourceId, sources.id))
+      .innerJoin(projects, eq(sources.projectId, projects.id))
+      .where(eq(projects.slug, GOLDEN_SLUG)),
+    db.select({ purpose: purposeContracts })
+      .from(purposeContracts)
+      .innerJoin(projects, eq(purposeContracts.projectId, projects.id))
+      .where(eq(projects.slug, GOLDEN_SLUG))
+      .limit(1),
+    db.select({ formalization: formalizations })
+      .from(formalizations)
+      .innerJoin(projects, eq(formalizations.projectId, projects.id))
+      .where(eq(projects.slug, GOLDEN_SLUG))
+      .limit(1),
+    db.select({ fixture: testFixtures })
+      .from(testFixtures)
+      .innerJoin(projects, eq(testFixtures.projectId, projects.id))
+      .where(eq(projects.slug, GOLDEN_SLUG)),
+  ]);
+  const goldenSourceRow = sourceRows[0];
+  if (!goldenSourceRow) throw new Error(`golden benchmark project '${GOLDEN_SLUG}' is not seeded`);
 
-  const goldenSource = await db.query.sources.findFirst({ where: eq(sources.projectId, golden.id) });
-  if (!goldenSource) throw new Error('golden benchmark project has no source');
-  const goldenSpans = await db.query.sourceSpans.findMany({ where: eq(sourceSpans.sourceId, goldenSource.id) });
+  const { goldenId, source: goldenSource } = goldenSourceRow;
+  const goldenSpans = spanRows.map(({ span }) => span);
+  const goldenPurpose = purposeRows[0]?.purpose;
+  const goldenFormalization = formalizationRows[0]?.formalization;
+  const goldenFixtures = fixtureRows.map(({ fixture }) => fixture);
 
-  const goldenPurpose = await db.query.purposeContracts.findFirst({ where: eq(purposeContracts.projectId, golden.id) });
-  const goldenFormalization = await db.query.formalizations.findFirst({ where: eq(formalizations.projectId, golden.id) });
-  const goldenFixtures = await db.query.testFixtures.findMany({ where: eq(testFixtures.projectId, golden.id) });
-
+  const projectId = randomUUID();
+  const sourceId = randomUUID();
   const slug = uniqueSlug('ccpa-2018-fork');
-  const [project] = await db
-    .insert(projects)
-    .values({
+  await db.batch([
+    db.insert(projects).values({
+      id: projectId,
       workspaceId,
       slug,
       name: 'CCPA 2018 (fork)',
       isPublic: false,
       demoTemplate: 'ccpa-2018',
-      forkedFrom: golden.id,
-    })
-    .returning();
-
-  const [source] = await db
-    .insert(sources)
-    .values({
-      projectId: project.id,
+      forkedFrom: goldenId,
+    }),
+    db.insert(sources).values({
+      id: sourceId,
+      projectId,
       title: goldenSource.title,
       jurisdiction: goldenSource.jurisdiction,
       canonicalUrl: goldenSource.canonicalUrl,
@@ -56,60 +79,58 @@ export async function forkGoldenProject(workspaceId: string): Promise<{ projectI
       sha256: goldenSource.sha256,
       text: goldenSource.text,
       metadata: goldenSource.metadata,
-    })
-    .returning();
-
-  if (goldenSpans.length > 0) {
-    await db.insert(sourceSpans).values(
-      goldenSpans.map((s) => ({
-        sourceId: source.id,
+    }),
+    ...(goldenSpans.length > 0
+      ? [db.insert(sourceSpans).values(goldenSpans.map((s) => ({
+        sourceId,
         id: s.id,
         sectionPath: s.sectionPath,
         label: s.label,
         text: s.text,
         startOffset: s.startOffset,
         endOffset: s.endOffset,
-      })),
-    );
-  }
-
-  if (goldenPurpose) {
-    await db.insert(purposeContracts).values({
-      projectId: project.id,
-      version: goldenPurpose.version,
-      status: goldenPurpose.status,
-      contract: goldenPurpose.contract,
-      hash: goldenPurpose.hash,
-    });
-  }
-
-  if (goldenFormalization) {
-    await db.insert(formalizations).values({
-      projectId: project.id,
-      sourceId: source.id,
-      version: goldenFormalization.version,
-      status: goldenFormalization.status,
-      ir: goldenFormalization.ir,
-      irHash: goldenFormalization.irHash,
-      schemaVersion: goldenFormalization.schemaVersion,
-    });
-  }
-
-  if (goldenFixtures.length > 0) {
-    await db.insert(testFixtures).values(
-      goldenFixtures.map((f) => ({
-        projectId: project.id,
+      })))]
+      : []),
+    ...(goldenPurpose
+      ? [db.insert(purposeContracts).values({
+        projectId,
+        version: goldenPurpose.version,
+        status: goldenPurpose.status,
+        contract: goldenPurpose.contract,
+        hash: goldenPurpose.hash,
+      })]
+      : []),
+    ...(goldenFormalization
+      ? [db.insert(formalizations).values({
+        projectId,
+        sourceId,
+        version: goldenFormalization.version,
+        status: goldenFormalization.status,
+        ir: goldenFormalization.ir,
+        irHash: goldenFormalization.irHash,
+        schemaVersion: goldenFormalization.schemaVersion,
+      })]
+      : []),
+    ...(goldenFixtures.length > 0
+      ? [db.insert(testFixtures).values(goldenFixtures.map((f) => ({
+        projectId,
         kind: f.kind,
         label: f.label,
         pins: f.pins,
         expect: f.expect,
-      })),
-    );
-  }
+      })))]
+      : []),
+    db.insert(auditEvents).values({
+      projectId,
+      actor: workspaceId,
+      action: 'fork',
+      entityType: 'project',
+      entityId: projectId,
+      metadata: { forkedFrom: goldenId },
+    }),
+  ]);
 
-  await logAudit({ projectId: project.id, actor: workspaceId, action: 'fork', entityType: 'project', entityId: project.id, metadata: { forkedFrom: golden.id } });
-
-  return { projectId: project.id, slug };
+  return { projectId, slug };
 }
 
 export interface PasteInput {
