@@ -1,5 +1,8 @@
 # Loophole: LexHack 2026 Execution Plan
 
+> **SUPERSEDED (2026-09-27): this is the v1 (Z3) plan, kept as the historical record.** Phases 0 to 6 below were built and are on `main`.
+> The project pivoted to an agentic architecture (Z3 removed). **Execute [2026-09-27-loophole-v2-plan.md](2026-09-27-loophole-v2-plan.md) instead**; its engine spec is [new_architecture.md](new_architecture.md) and its UI spec is [frontend_v2.md](frontend_v2.md). Phase 7 below is replaced by v2 plan Phase 8.
+
 > **For Claude:** REQUIRED SUB-SKILL: use `superpowers:executing-plans` (or `superpowers:subagent-driven-development`) to execute this plan task by task.
 > **Work directly in this repository on `main`. Do NOT create git worktrees, feature branches, or sandboxes.** Commit after every task.
 
@@ -81,7 +84,7 @@ Living checklist. Check off a phase/task only after its `Commit` step actually r
   - [x] Task 6.2: Accessibility pass (found and fixed 3 real WCAG AA contrast failures in the design tokens and 2 critical unlabeled-form-field bugs on Purpose Contract via `@axe-core/playwright`; added the aria-live verdict announcer and prefers-reduced-motion handling; 9/9 accessibility checks passing)
   - [x] Task 6.3: Playwright demo spec (`e2e/demo.spec.ts`, passes end to end against the real dev server + live Groq in ~96s; timeout budget raised from the plan's 90s to 240s since real Groq latency across 8 candidates plus a live repair call measured well past 90s)
   - [x] Task 6.4: Evaluation table (`scripts/eval.ts`; added an `ok` column to `model_calls` so schema-validity rate is computed from real logged attempts, not just successes; 9/10 metrics passing against real seeded + live-tested data, one honest near-miss on demo latency reported in README.md rather than adjusted to pass)
-- [ ] [Phase 7: Ship, video, Devpost](#phase-7-ship-video-devpost-h42-to-h48)
+- [ ] [Phase 7: Ship, video, Devpost](#phase-7-ship-video-devpost-h42-to-h48) (**moved to the [v2 plan](2026-09-27-loophole-v2-plan.md) (Phase 8)**; everything remaining lives there)
   - [ ] Task 7.1: README
   - [ ] Task 7.2: Video script
   - [ ] Task 7.3: Devpost submission

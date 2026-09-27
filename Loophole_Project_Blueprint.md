@@ -4,13 +4,15 @@
 
 **Hackathon-grade product, demo, and technical blueprint**  
 **Target:** LexHack 2026 — AI Safety, Ethics & Governance × Legal Automation × Civic Technology  
-**Build posture:** a narrow, functioning proof system—not a generic legal chatbot and not a pretend “AI lawyer.”
+**Build posture:** a narrow, functioning adversarial review system, not a generic legal chatbot and not a pretend “AI lawyer.”
+
+> **v2 (2026-09-27): Z3 removed.** The trust engine is now Attack agent → verbatim-quote gate (code) → jury of 3 AI judges (blind to the attacker's arguments) → human tie-break → Repair agent → human signs patch → 3-check re-attack. UI: one War Room page ([docs/plans/frontend_v2.md](docs/plans/frontend_v2.md)). Spec: [docs/plans/new_architecture.md](docs/plans/new_architecture.md), which wins on any conflict. Plan: [docs/plans/2026-09-27-loophole-v2-plan.md](docs/plans/2026-09-27-loophole-v2-plan.md). Sections marked *v2 note* are kept only as history.
 
 ---
 
 ## 1. The product in one sentence
 
-**Loophole turns a proposed rule and its stated purpose into an executable specification, searches for ways a rational actor could obey the words while defeating the purpose, formally certifies valid counterexamples, proposes the smallest repair, and attacks the repaired draft again.**
+**Loophole takes a proposed rule and its stated purpose, searches for ways a rational actor could obey the words while defeating the purpose, confirms only the schemes that quote the text verbatim and survive an independent defense review, proposes the smallest repair, and attacks the repaired draft again.**
 
 The interface should make legislation feel testable in the same way software is testable.
 
@@ -20,12 +22,11 @@ Software teams fuzz code before attackers do. Legislators rarely get the same pr
 
 1. upload a bill or select an official version;
 2. state the outcome the bill is supposed to protect;
-3. review the machine-readable rule model;
-4. press **Attack**;
-5. receive only counterexamples that a solver can satisfy inside that model;
-6. press **Repair**, approve a minimal amendment, and **Re-attack**.
+3. press **Attack**;
+4. receive only schemes that quote the bill verbatim and survive a blind jury of 3 AI judges (you break any tie);
+5. press **Repair**, approve a minimal amendment, and **Re-attack**.
 
-The memorable moment is not an AI-generated paragraph. It is the transition from **“0 certified exploits”** to **“1 certified exploit”**, followed by the repaired draft returning **UNSAT for that exploit class**.
+The memorable moment is not an AI-generated paragraph. It is watching most clever-sounding schemes die (bad quote, a judge quotes the clause that blocks them, or it turns out to be harmless), **two surviving all three judges**, then flipping from **Confirmed to Blocked** after the repair while every legitimate use stays allowed.
 
 ---
 
@@ -46,10 +47,10 @@ Today, legislative drafters and public-interest reviewers find these failures th
 Loophole divides the job correctly:
 
 - **AI explores:** it extracts candidate rules, generates adversarial restructurings, explains findings, and proposes repairs.
-- **Humans define and approve meaning:** every formal rule is traceable to source text and editable.
-- **Z3 verifies:** a finding is “certified” only when a satisfying assignment exists in the approved model.
+- **Humans define and approve meaning:** the Purpose Contract and every repair are human-approved.
+- **Code gates, a jury judges, a human decides ties:** a claim must quote the source verbatim (deterministic check), then all 3 AI judges (strict reader, purpose reader, regulator), who never see the attacker's arguments, must agree the text permits it and the purpose is defeated. A split goes to the human.
 
-The product must always say **“certified within this reviewed formal model,”** never “legally proven” or “the law definitely has this loophole.”
+The product must always say **“confirmed by adversarial review,”** never “legally proven” or “the law definitely has this loophole.”
 
 ---
 
@@ -72,6 +73,8 @@ This is the **Purpose Contract**. A loophole exists only when a scenario satisfi
 
 ### 3.2 The formalization is a first-class review screen
 
+> **v2 note:** this section describes the retired Z3 design. The v2 equivalent is in [docs/plans/new_architecture.md](docs/plans/new_architecture.md). v2 has no formal model; traceability comes from verbatim quotes on every claim.
+
 The system never hides text-to-logic conversion. Each symbol, predicate, and constraint has:
 
 - a source-clause citation;
@@ -80,7 +83,7 @@ The system never hides text-to-logic conversion. Each symbol, predicate, and con
 - confidence/status: `AI proposed`, `human approved`, or `disputed`;
 - a round-trip rendering back into plain English.
 
-The user can edit the mapping before any certificate is trusted.
+The user can edit the mapping before any certificate is trusted. *(v1 only.)*
 
 ### 3.3 Findings are evidence bundles, not chat messages
 
@@ -89,7 +92,7 @@ Every finding is a **Loophole Card** containing:
 - the concrete actor and scenario;
 - exploited clauses and exact source spans;
 - purpose invariant violated;
-- solver result and model assignment;
+- Defense votes and reasoning (with blocking or permitting quotes);
 - assumptions and disputed mappings;
 - a “why this complies / why this harms” split explanation;
 - smallest suggested textual change;
@@ -99,7 +102,7 @@ Every finding is a **Loophole Card** containing:
 
 Closing one gap can accidentally ban legitimate conduct. Every repair runs two suites:
 
-- **Negative tests:** previously certified exploits should become impossible.
+- **Negative tests:** previously confirmed exploits should become Blocked.
 - **Positive tests:** user-approved legitimate scenarios should remain possible.
 
 ### 3.5 The demo uses retrodiction, not a hand-picked fictional win
@@ -149,18 +152,18 @@ A legislative drafter, policy clinic, civil-society organization, regulator, sta
 |---|---|---|---|---|
 | 1. Create | Select “Historical benchmark,” import an official bill, or paste text | Create project and immutable source version | Source Pack | Source URL, version, retrieval time, hash |
 | 2. Declare intent | Complete Purpose Contract | Validate invariant schema | Intent cards | Human approval required |
-| 3. Compile | Press **Compile** | Parse clauses; run two independent extraction passes; reconcile | Clause-to-rule split view | Disputes block certification |
-| 4. Seed tests | Approve legitimate and harmful examples | Convert examples into solver fixtures | Coverage matrix | At least one positive and one negative test |
-| 5. Attack | Press **Attack** | Generate typed adversarial candidates by tactic family | Live Attack Arena | LLM output is untrusted until solved |
-| 6. Certify | Open a candidate | Translate candidate to constraints and run Z3 | Solver certificate | `SAT` plus trace required |
-| 7. Explain | Inspect certified result | Ground explanation only in source, purpose, and model assignment | Loophole Card | Every sentence links to evidence |
+| 3. Seed tests | Write legitimate uses in plain language | Stored with the Purpose Contract | Must-stay-legal cards | At least one legitimate use |
+| 4. Attack | Press **Attack** | Attack agent proposes schemes per tactic lane, each quoting the bill | Live Attack Arena | Output untrusted until grounded and reviewed |
+| 5. Ground | Automatic | Check every quote is verbatim in the hashed source | Ungrounded chips greyed out | Deterministic, no LLM |
+| 6. Cross-examine | Automatic, human on splits | Jury of 3 judges votes, blind to the attacker's arguments | Verdict chips | 3/3 `loophole` required; split → human ruling |
+| 7. Explain | Open a confirmed finding | Show scenario, quotes, attacker memo vs defense votes | Loophole Card | Every claim links to a quoted span |
 | 8. Repair | Press **Repair** and approve/edit amendment | Generate minimal patch; recompile affected rules | Side-by-side redline | Human approval required |
-| 9. Re-attack | Press **Re-attack** | Run exploit regression, positive tests, then fresh attacks | Before/after report | Old exploit must be `UNSAT`; positives stay `SAT` |
+| 9. Re-attack | Press **Re-attack** | Run exploit regression, legitimate-use checks, then fresh attacks | Before/after report | Old exploit must be Blocked; legitimate uses stay allowed |
 | 10. Share | Export replay | Produce read-only, citation-rich report | Public demo link | Disclaimer and model scope included |
 
 ### System sequence
 
-`Official source → immutable Source Pack → reviewed Purpose Contract → clause compiler → typed Legal IR → adversarial candidate generator → Z3 verifier → certified finding → minimal repair → regression suite → fresh re-attack → shareable replay`
+`Official source → immutable Source Pack → reviewed Purpose Contract → Attack agent → verbatim-quote gate → blind Defense agent (3 votes) → confirmed finding → minimal repair → regression suite → fresh re-attack → shareable replay`
 
 ---
 
@@ -168,7 +171,7 @@ A legislative drafter, policy clinic, civil-society organization, regulator, sta
 
 ### Product personality
 
-Loophole should feel like a precise investigative workbench: calm, serious, visual, and slightly dramatic when a certificate appears. It must not look like a chatbot with a legal-themed gradient.
+Loophole should feel like a precise investigative workbench: calm, serious, visual, and slightly dramatic when a finding is confirmed. It must not look like a chatbot with a legal-themed gradient.
 
 ### Visual direction
 
@@ -178,14 +181,14 @@ Loophole should feel like a precise investigative workbench: calm, serious, visu
 - **Repair:** electric blue (`#276EF1`) for proposed edits.
 - **Uncertainty:** amber (`#B7791F`) for disputed mappings.
 - **Typography:** an editorial serif for titles (for example, Source Serif) and a highly legible sans for controls (Inter/Geist); monospace only for formulas and IDs.
-- **Motion:** short, purposeful transitions—clause highlights flow into constraints, rejected attacks fade out, and a certified path locks into place.
-- **Accessibility:** WCAG AA contrast, full keyboard navigation, never encode status by color alone, reduced-motion mode, and plain-language labels for solver terms.
+- **Motion:** short, purposeful transitions—clause highlights flow into constraints, rejected attacks fade out, and a confirmed finding locks into place.
+- **Accessibility:** WCAG AA contrast, full keyboard navigation, never encode status by color alone, reduced-motion mode, and plain-language labels for every status.
 
 ### Global layout
 
 - Left rail: project stages and completion state.
 - Main canvas: the current task.
-- Right evidence drawer: source clause, assumptions, solver assignment, and audit history.
+- Right evidence drawer: source clause, quotes, defense votes, and audit history.
 - Persistent top strip: source version, purpose version, model version, and “reviewed/unreviewed” status.
 
 ### Screen 1 — Project Gallery
@@ -196,7 +199,7 @@ Three large choices:
 2. **Import from Congress.gov** — search and select a bill version.
 3. **Paste or upload a draft** — text, HTML, XML, or PDF.
 
-Each project card shows `clauses`, `approved rules`, `certified findings`, `last run`, and a compact attack/repair sparkline.
+Each project card shows `clauses`, `approved rules`, `confirmed findings`, `last run`, and a compact attack/repair sparkline.
 
 ### Screen 2 — Source Pack
 
@@ -211,6 +214,8 @@ Use sentence-shaped controls instead of a raw form:
 Below it, show “must remain allowed” examples. This screen is the human specification gate.
 
 ### Screen 4 — Clause Compiler
+
+> **v2: removed.** This screen was the setup wall; v2 goes Purpose Contract → Attack directly.
 
 Three synchronized columns:
 
@@ -233,26 +238,26 @@ This is the visual hero screen. Display tactic lanes:
 - redefine consideration/control;
 - satisfy procedure without outcome.
 
-Candidate cards move through `generated → schema-valid → solved → rejected/certified`. Judges can see that most plausible stories are rejected.
+Candidate cards move through `proposed → grounded → cross-examined → thrown out / blocked / harmless / jury split / LOOPHOLE`. Judges can see that most plausible stories are rejected, each with the reason quoted.
 
-### Screen 6 — Certified Loophole Card
+### Screen 6 — Confirmed Loophole Card
 
 The card opens with:
 
-> **Certified inside model LHP-001**  
-> The actor can disclose data for cross-context advertising without receiving consideration; the older encoded rule’s “sale” trigger remains false while the purpose invariant is false.
+> **Confirmed by adversarial review (3/3 judges)**  
+> The actor can disclose data for cross-context advertising without receiving consideration; “sell” requires consideration, so the opt-out prohibition never triggers, while the stated purpose is defeated.
 
 Then show:
 
 - `Law satisfied ✓`
-- `Purpose violated ✕`
-- exploited definition;
-- concrete variable assignment;
-- proof trace in human order;
+- `Purpose defeated ✕`
+- exploited definition, quoted;
+- concrete scenario;
+- attacker memo vs defense votes, side by side;
 - source citations;
 - assumptions and model limitations.
 
-The raw SMT-LIB and model are available behind **Inspect certificate**, never forced on a nontechnical judge.
+The full debate transcript and finding hash are behind **Debate transcript**, never forced on a nontechnical judge.
 
 ### Screen 7 — Repair Studio
 
@@ -264,12 +269,11 @@ A single compelling comparison:
 
 | | Original | Repaired |
 |---|---:|---:|
-| Historical exploit | `SAT` | `UNSAT` |
+| Historical exploit | LOOPHOLE | PATCHED |
 | Legitimate scenarios preserved | 3/3 | 3/3 |
-| Certified fresh exploits | 1 | 0 in selected tactic set |
-| Disputed rules | 0 | 0 |
+| Confirmed fresh exploits | 2 | 0 in selected tactic set |
 
-Use “no exploit found within this model and search budget,” never “no loopholes exist.”
+Use “no loophole survived review in this run's search budget,” never “no loopholes exist.”
 
 ---
 
@@ -286,25 +290,27 @@ The video should tell one story, not tour every setting. Use a seeded, determini
 | 0:00–0:12 | Cold open: old rule on the left, “purpose protected” on the right; press **Attack** | “Software gets red-teamed before launch. Law usually gets red-teamed after harm.” |
 | 0:12–0:30 | Project overview and official source/version badge | Establish real source and bounded claim |
 | 0:30–0:50 | Purpose Contract and one positive scenario | Show that intent is explicit and human-approved |
-| 0:50–1:10 | Clause Compiler; click text → rule → formula | Prove this is not a hidden prompt |
-| 1:10–1:32 | Attack Arena rapidly rejects candidates, certifies one | Hero moment: AI searches, solver filters |
-| 1:32–1:55 | Open certificate, inspect assignment and citations | Explain compliance versus purpose defeat in plain language |
+| 0:50–1:12 | War Room: schemes hit clauses, jury seats light up | Hero moment: one AI attacks, code and a blind jury filter |
+| 1:12–1:32 | Open a blocked chip, see the quoted blocking clause | Prove this is not a hidden prompt |
+| 1:32–1:55 | Open a LOOPHOLE: quotes, memo vs the 3 judges | Explain compliance versus purpose defeat in plain language |
 | 1:55–2:18 | Reveal later official wording and Loophole repair side by side | Historical retrodiction credibility |
-| 2:18–2:38 | Approve repair and re-attack | Old exploit flips from `SAT` to `UNSAT` |
-| 2:38–2:50 | Positive scenarios remain `SAT` | Repair did not simply prohibit everything |
-| 2:50–3:00 | Current bill import and closing line | “Loophole is CI for public rules: attack, certify, repair, repeat.” |
+| 2:18–2:38 | Approve repair and re-attack | Old loophole flips to PATCHED |
+| 2:38–2:50 | Legitimate scenarios still allowed; overbroad fix fails | Repair did not simply prohibit everything |
+| 2:50–3:00 | Paste a current bill and closing line | “Loophole is CI for public rules: attack, cross-examine, repair, repeat.” |
 
 ### Demo reliability rules
 
-- Bundle the exact official source text, parsed clauses, approved IR, attack candidates, and certificates as versioned fixtures.
-- The **Demo Mode** replays recorded stages but reruns the local deterministic solver certificate in real time.
+- Bundle the exact official source text, parsed clauses, attack proposals, defense votes, and repairs as versioned fixtures.
+- The **Demo Mode** replays recorded agent output from a real Live run, while the verbatim-quote gate and hash checks run live.
 - A **Live Mode** can call the model and official APIs after the core demo.
-- Never fake a solver status. Cache a known valid constraint set and verify it during build/test.
+- Never fake a verdict. Recorded fixtures must come from a Live run that passed the pivot gate.
 - Record a clean backup video before submission day.
 
 ---
 
 ## 8. System architecture
+
+> **v2 note:** this section describes the retired Z3 design. The v2 equivalent is in [docs/plans/new_architecture.md](docs/plans/new_architecture.md). Keep Next.js, Neon, AI SDK, run events; drop Z3, Vercel Workflow, and Blob.
 
 ### Architecture decision
 
@@ -329,6 +335,8 @@ The core problem is structured constraint reasoning, not semantic retrieval. Neo
 ---
 
 ## 9. Domain model and Legal IR
+
+> **v2 note:** this section describes the retired Z3 design. The v2 equivalent is in [docs/plans/new_architecture.md](docs/plans/new_architecture.md). See its section 2 for the `AttackProposal`, `DefenseVote`, and `RepairProposal` contracts.
 
 ### Core types
 
@@ -393,6 +401,8 @@ Natural-language interpretation is not decidable by Z3. Loophole proves a proper
 
 ## 10. AI pipeline
 
+> **v2 note:** this section describes the retired Z3 design. The v2 equivalent is in [docs/plans/new_architecture.md](docs/plans/new_architecture.md). Stages B, C and E are gone; D (tactic lanes) and G (repair) stay; F becomes the Defense agent.
+
 ### Stage A — Document structure
 
 Parse official XML/HTML first. Use OCR only for image-only PDFs. Preserve section hierarchy, definitions, cross-references, page/paragraph anchors, and the exact source bytes/hash.
@@ -445,6 +455,8 @@ Require schema-constrained output with Zod. Vercel’s AI SDK supports typed str
 
 ## 11. Backend API design
 
+> **v2 note:** this section describes the retired Z3 design. The v2 equivalent is in [docs/plans/new_architecture.md](docs/plans/new_architecture.md). v2 drops compile/formalization/rule routes and renames certificates to findings ([v2 plan](docs/plans/2026-09-27-loophole-v2-plan.md) Task 3.6).
+
 All mutating endpoints require authentication, project access, a Zod-validated payload, and an idempotency key. Long operations return `202 Accepted` with a `runId`; the client subscribes to run events.
 
 ### Projects and sources
@@ -493,6 +505,8 @@ Do not expose government API keys to the browser. Cache immutable text versions 
 ---
 
 ## 12. Neon database design
+
+> **v2 note:** this section describes the retired Z3 design. The v2 equivalent is in [docs/plans/new_architecture.md](docs/plans/new_architecture.md). See its section 3 for the one-migration diff (`findings` replaces `formalizations`/`certificates`).
 
 Use **Neon Postgres + Drizzle ORM**. Runtime access should follow Neon/Vercel’s current recommended pooled/serverless connection guidance; migrations use a direct connection. Preview deployments get isolated Neon branches where available.
 
@@ -552,7 +566,7 @@ Use **Neon Postgres + Drizzle ORM**. Runtime access should follow Neon/Vercel’
 | [California SB-833](https://leginfo.legislature.ca.gov/faces/billCompareClient.xhtml?bill_id=202520260SB833&showamends=false) | Human-oversight duties plus a “substantially disruptive” alternative-review branch | Strong adversarial test candidate for nominal oversight and exception abuse |
 | [California AB-1609](https://leginfo.legislature.ca.gov/faces/billCompareClient.xhtml?bill_id=202520260AB1609&showamends=false) | Current customer-service chatbot duties with multiple versions | Optional current-bill import, subject to status/version recheck before demo |
 
-The contemporary cases are **attack targets, not pre-declared findings**. The system earns credibility only if the formalization is approved and Z3 returns a model.
+The contemporary cases are **attack targets, not pre-declared findings**. The system earns credibility only if a finding quotes the bill verbatim and survives a unanimous blind defense vote.
 
 ### Expansion sources—not hackathon dependencies
 
@@ -578,6 +592,8 @@ Store this benchmark as versioned JSON fixtures in the repository with source UR
 ---
 
 ## 14. Workflow internals
+
+> **v2 note:** this section describes the retired Z3 design. The v2 equivalent is in [docs/plans/new_architecture.md](docs/plans/new_architecture.md).
 
 ### Compile workflow
 
@@ -630,7 +646,7 @@ Every run input is content-addressed from source version, purpose version, forma
 - Use signed upload URLs and malware/type checks for files.
 - Hash immutable sources and certificates; expose hashes in reports.
 - Log approvals, edits, model versions, prompt hashes, and solver versions.
-- Add a visible disclaimer: “Research and drafting support; not legal advice. Certificate applies only to the displayed formal model.”
+- Add a visible disclaimer: “Research and drafting support. Not legal advice. Findings are AI-reviewed, grounded in quoted text, and require human judgment.”
 - Prevent weaponization-by-obscurity concerns through responsible output: projects are private by default; public sharing is explicit; sensitive unpublished drafts are not used for training.
 - Include a **Report modeling error** action on every rule and finding.
 
@@ -643,25 +659,29 @@ Every run input is content-addressed from source version, purpose version, forma
 | Metric | Definition | Hackathon target |
 |---|---|---:|
 | Source trace coverage | Approved rules with at least one exact source span | 100% |
-| Formalization review coverage | Rules explicitly approved or disputed | 100% before certification |
+| Grounding | Findings whose every quote is verbatim in the source | 100% (enforced) |
 | Schema validity | Model outputs passing typed validation | ≥95% after one retry |
-| Solver reproducibility | Certificates that reproduce from stored input | 100% |
+| Golden verdict agreement | C1 to C8 verdicts match expectations | 8/8 in 2 of 3 live runs |
+| Defense unanimity | Share of verdicts with a unanimous vote | reported, no target |
 | Historical retrodiction | Golden exploit class independently rediscovered | 1/1 |
-| Positive preservation | Legitimate fixtures still `SAT` after repair | 100% |
-| Exploit closure | Golden exploit family becomes `UNSAT` after repair | 100% |
+| Positive preservation | Legitimate uses still allowed after repair | 100% |
+| Exploit closure | Golden exploits Blocked after repair | 100% |
 | Citation correctness | Finding claims linked to relevant approved evidence | 100% in demo report |
-| Demo latency | Seeded attack → certificate visible | <15 seconds |
+| Demo latency | Seeded attack → first confirmed finding visible | <15 seconds |
 | Fresh-run budget | Complete bounded live run | <2 minutes or async with progress |
 
 ### Negative controls
 
-- A deliberately impossible attack must be rejected by Z3.
-- A purpose invariant identical to the legal duty should produce no purpose-gap certificate.
-- An overbroad repair (“ban all data transfer”) must fail at least one positive fixture.
-- A disputed source mapping must block the “certified” badge.
-- A certificate altered after generation must fail its hash check.
+- An attack quoting words not in the bill must be rejected as ungrounded.
+- An attack the text plainly forbids (golden C2, C3, C7) must be blocked with a quote.
+- A legal but harmless scheme (golden C4, C5, C6) must be judged harmless, not a loophole.
+- An overbroad repair (“ban all data transfer”) must fail at least one legitimate use.
+- A split jury must show "Jury split" and wait for a human, never LOOPHOLE.
+- A finding altered after generation must fail its hash check.
 
 ### The four-hour kill test
+
+> **v2 note:** this section describes the retired Z3 design. The v2 equivalent is in [docs/plans/new_architecture.md](docs/plans/new_architecture.md). Its replacement is the pivot gate ([v2 plan](docs/plans/2026-09-27-loophole-v2-plan.md) Phase 4).
 
 Proceed with Loophole only if the team can:
 
@@ -682,10 +702,10 @@ If that loop cannot work, narrow the model further. Do not hide a failed solver 
 - one official historical Source Pack;
 - 10–20 bounded clauses/definitions;
 - reviewed Purpose Contract;
-- clause-to-rule traceability UI;
+- quote-to-source traceability on every claim;
 - 5–8 attack candidates across at least three tactics;
-- at least one real solver-certified counterexample;
-- inspectable certificate;
+- at least one finding confirmed 3/3 in a real Live run;
+- inspectable debate transcript;
 - one approved repair and complete re-attack;
 - positive regression fixtures;
 - shareable read-only report;
@@ -695,9 +715,8 @@ If that loop cannot work, narrow the model further. Do not hide a failed solver 
 
 - Congress.gov import;
 - contemporary California bill import;
-- dual-extractor dispute view;
 - attack progress streaming;
-- model/prompt/solver provenance panel;
+- model/prompt provenance panel;
 - responsive, keyboard-accessible UI.
 
 ### Could ship
@@ -720,6 +739,8 @@ If that loop cannot work, narrow the model further. Do not hide a failed solver 
 - claims of universal legal correctness.
 
 ### Suggested implementation order
+
+> **v2 note:** this section describes the retired Z3 design. The v2 equivalent is in [docs/plans/new_architecture.md](docs/plans/new_architecture.md). Remaining work: the [v2 plan](docs/plans/2026-09-27-loophole-v2-plan.md) (Phases 0 to 8, ending with ship).
 
 | Block | Outcome |
 |---|---|
@@ -811,17 +832,15 @@ Do not require Regulations.gov, EUR-Lex, or any live government endpoint for the
 | Decision | Choice | Reason |
 |---|---|---|
 | Product boundary | Draft/policy red-team, not legal advice | Clear user, safer claim, differentiated demo |
-| Proof boundary | “Certified within reviewed model” | Solver cannot validate natural-language interpretation |
+| Proof boundary | “Confirmed by adversarial review” | Agents review, they do not prove; claims stay grounded in quotes |
 | Database | Neon Postgres | Relational provenance, JSONB IR, serverless fit, optional pgvector |
-| Solver | Official Z3 TypeScript/WASM server-side | One deploy and deterministic certificates |
-| Orchestration | Vercel Workflow | Durable multi-step jobs and human approval pauses |
+| Judge | Deterministic quote gate + blind jury of 3 + human tie-break | Handles real legal language; zero setup per bill |
+| Orchestration | Next.js `after()` + `run_events` | Refresh-safe, no beta surface |
 | AI layer | Vercel AI SDK provider abstraction | Structured output and model portability |
 | Retrieval | SQL/full-text first | Bounded corpus; vector similarity is not proof |
 | Source strategy | Official APIs + immutable snapshots | Reproducibility and version traceability |
 | Demo strategy | Seeded retrodiction plus optional live import | Reliable and independently meaningful |
 | Repair strategy | Minimal patch plus two-sided regression | Prevent “fix by banning everything” |
-
-Kev was used as a bounded second opinion on the solver deployment choice, not as factual evidence. Across four option-order permutations it selected the Vercel TypeScript/WASM architecture with probabilities from **0.8225 to 0.8805**; the alternatives remained below 0.087 in every run. These are model preferences, not measured success probabilities. The final choice is supported primarily by the official Z3 bindings, bounded MVP workload, and reduced deployment surface.
 
 ---
 
@@ -832,24 +851,24 @@ The concept maps unusually well to the published judging criteria:
 | LexHack criterion | Weight | What judges see |
 |---|---:|---|
 | Real-world impact & feasibility | 25% | A deployable pre-publication workflow for drafters and civic groups; official source integrations; bounded claim |
-| Technical execution & functionality | 25% | Typed Legal IR, durable workflow, solver certificates, traceability, repair regression—not a prompt wrapper |
-| UX & design | 20% | A visual attack/certificate/repair loop understandable without reading SMT-LIB |
-| Innovation & originality | 15% | Fuzzing and counterexample-guided repair applied to legislation with formal verification |
-| Presentation & documentation | 15% | A three-minute historical retrodiction with a real `SAT → UNSAT` transformation |
+| Technical execution & functionality | 25% | Deterministic quote gate, blind jury of 3, human tie-break, immutable versions, 3-check re-attack, not a prompt wrapper |
+| UX & design | 20% | Paste a bill and attack; a visual attack/verdict/repair loop anyone can follow |
+| Innovation & originality | 15% | Fuzzing and red-team/blue-team review with regression-tested repair applied to legislation |
+| Presentation & documentation | 15% | A three-minute historical retrodiction with a live Confirmed → Blocked flip |
 
 The hackathon explicitly rewards solutions at the intersection of AI, law, civic technology, governance, automation, real-world impact, usability, and innovation. Loophole hits those goals with one coherent mechanism rather than a bundle of unrelated features.
 
 ### What makes it more than an LLM wrapper
 
-- The LLM cannot award its own finding a certificate.
-- The core artifact is executable Legal IR tied to source spans.
-- Z3 can reject a persuasive but impossible scenario.
+- The attacker cannot award itself a finding.
+- Every claim must quote the hashed source verbatim, checked by code.
+- Three judges who never hear the attacker's pitch can reject a persuasive but wrong scenario, and must quote why; ties go to a human.
 - Repairs must survive both exploit and legitimate-use regression tests.
 - Every visible conclusion can be replayed from versioned inputs.
 
 ### The closing pitch
 
-> “AI agents will find specification gaps faster than institutions can react. Loophole gives rulemakers the same advantage before deployment: state the purpose, compile the rule, attack it, certify the failure, repair it, and run the tests again.”
+> “AI agents will find specification gaps faster than institutions can react. Loophole gives rulemakers the same advantage before deployment: state the purpose, attack the rule, cross-examine every claim, repair it, and run the tests again.”
 
 ---
 
@@ -857,7 +876,7 @@ The hackathon explicitly rewards solutions at the intersection of AI, law, civic
 
 ### Short summary
 
-**Loophole is a pre-deployment red team for law. It converts a proposed rule and its intended purpose into a reviewable formal model, uses AI to generate specification-gaming scenarios, certifies real counterexamples with Z3, proposes a minimal amendment, and re-attacks the repaired draft.**
+**Loophole is a pre-deployment red team for law. It uses one AI to generate specification-gaming schemes against a bill and its stated purpose, keeps only those that quote the text verbatim and survive a blind jury of 3 AI judges (a human breaks ties), proposes a minimal amendment, and re-attacks the repaired draft.**
 
 ### Problem
 
@@ -865,13 +884,13 @@ Legal rules are often tested only after publication—through public harm, enfor
 
 ### Solution
 
-Loophole combines the breadth of adversarial AI with the discipline of formal verification. Every rule maps to a source clause, every certificate exposes its assumptions, and every repair must close the exploit without breaking approved legitimate scenarios.
+Loophole pits a red-team agent against a jury of three AI judges under code-enforced rules, with a human breaking ties. Every claim quotes a hashed source clause, the judges never hear the attacker's argument, and every repair must close the exploit without breaking approved legitimate scenarios.
 
 ### Suggested tagline options
 
 1. **Fuzz your law before AI agents do.**
 2. **CI for public rules.**
-3. **Attack. Certify. Repair. Re-attack.**
+3. **Attack. Cross-examine. Repair. Re-attack.**
 
 Use option 1 as the primary tagline and option 3 as the product loop.
 
@@ -891,18 +910,15 @@ Research checked on **27 September 2026**. Platform plans, quotas, bill status, 
 - [Federal Register API v1](https://www.federalregister.gov/developers/documentation/api/v1)
 - [Regulations.gov API v4](https://open.gsa.gov/api/regulationsgov/)
 - [California Civil Code §1798.140](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.140)
-- [Microsoft Z3 repository](https://github.com/Z3Prover/z3)
-- [Microsoft Z3 JavaScript guide](https://microsoft.github.io/z3guide/programming/Z3%20JavaScript%20Examples/)
-- [Vercel Workflow concepts](https://vercel.com/docs/workflows/concepts)
 - [Vercel AI SDK](https://vercel.com/docs/ai-sdk)
 - [Neon connection guidance](https://neon.com/docs/connect/choose-connection)
 - [EUR-Lex data reuse](https://eur-lex.europa.eu/content/help/data-reuse/reuse-contents-eurlex-details.html)
 
 ### Claim discipline
 
-- “Certified” always means certified inside the displayed, approved, bounded model.
-- “Repair closes exploit” means the selected exploit family is `UNSAT` within the stated bounds and regression fixtures pass.
-- “No exploit found” never means no loophole exists.
+- “Confirmed” always means confirmed by adversarial review in a specific run, never proven.
+- “Repair closes exploit” means the original scheme is Blocked, a fresh attack confirms nothing, and legitimate uses stay allowed.
+- “No loophole survived review” never means no loophole exists.
 - The historical benchmark result must be regenerated by the implemented system before it appears in the final submission.
 
 ---
@@ -911,6 +927,6 @@ Research checked on **27 September 2026**. Platform plans, quotas, bill status, 
 
 Build **one impeccable loop**:
 
-> **official text → explicit purpose → transparent formalization → adversarial search → solver-certified counterexample → minimal repair → positive/negative regression → re-attack**
+> **official text → explicit purpose → adversarial search → verbatim-quote gate → blind jury of 3 → human tie-break → minimal repair → 3-check re-attack**
 
 If this loop works visibly and reproducibly, Loophole will feel ambitious, technically serious, product-complete, and unusually credible. Everything else is secondary.
