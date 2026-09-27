@@ -7,7 +7,7 @@ import { db } from '@/db/client';
 import { formalizations, repairs } from '@/db/schema';
 import { logAudit } from '@/server/audit';
 import { NotFoundError, toHttpError } from '@/server/errors';
-import { requireProjectAccess } from '@/server/workspace';
+import { parseUuidParam, requireProjectAccess } from '@/server/workspace';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,6 +30,7 @@ async function resolveProjectId(repairRow: typeof repairs.$inferSelect): Promise
 export async function PATCH(request: Request, { params }: { params: Promise<{ repairId: string }> }) {
   try {
     const { repairId } = await params;
+    parseUuidParam('repairId', repairId);
     const repairRow = await db.query.repairs.findFirst({ where: eq(repairs.id, repairId) });
     if (!repairRow) throw new NotFoundError(`repair '${repairId}' not found`);
 

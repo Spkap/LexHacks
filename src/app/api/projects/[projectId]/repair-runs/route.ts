@@ -6,7 +6,8 @@ import { Candidate, type Formalization, type PurposeContract } from '@/core/ir';
 import { db } from '@/db/client';
 import { attackCandidates, certificates, formalizations, purposeContracts, testFixtures } from '@/db/schema';
 import { runRepairPipeline } from '@/server/repair-run';
-import { NotFoundError, toHttpError } from '@/server/errors';
+import { NotFoundError, RateLimitError, toHttpError } from '@/server/errors';
+import { rateLimit } from '@/server/rate-limit';
 import { runExecutor, type Emit } from '@/server/runs';
 import { requireProjectAccess } from '@/server/workspace';
 
@@ -14,12 +15,15 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-const Body = z.object({ certificateId: z.string(), mode: z.enum(['demo', 'live']).default('live') });
+const Body = z.object({ certificateId: z.string().uuid(), mode: z.enum(['demo', 'live']).default('live') });
 
 export async function POST(request: Request, { params }: { params: Promise<{ projectId: string }> }) {
   try {
     const { projectId } = await params;
-    const { project } = await requireProjectAccess(projectId, 'write');
+    const { project, workspaceId } = await requireProjectAccess(projectId, 'write');
+
+    const limit = rateLimit(`repair-run:${workspaceId ?? projectId}`, 20, 3600);
+    if (!limit.ok) throw new RateLimitError('too many repair runs this hour');
 
     const json = await request.json();
     const body = Body.parse(json);

@@ -58,9 +58,11 @@
   --paper: #f7f6f2;
   --ink: #17201f;
   --verified: #0f5c5a;
-  --attack: #d65a4a;
-  --repair: #276ef1;
-  --uncertain: #b7791f;
+  /* attack/repair darkened, and muted-foreground below, to clear WCAG AA 4.5:1
+     against --paper (confirmed via @axe-core/playwright, e2e/accessibility.spec.ts) */
+  --attack: #b91c1c;
+  --repair: #1d4ed8;
+  --uncertain: #7a5310;
   --font-heading: var(--font-source-serif);
   --font-mono: var(--font-jetbrains-mono);
 
@@ -75,7 +77,7 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: #595959;
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -141,5 +143,43 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@keyframes chip-travel-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.chip-travel-in {
+  animation: chip-travel-in 220ms ease-out;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -60,6 +60,27 @@ export function AttackArena({ projectId, slug, isDemoTemplate }: { projectId: st
     certified: candidates.filter((c) => c.status === "certified").length,
   };
 
+  const lastEvent = events[events.length - 1];
+  const announcement = useMemo(() => {
+    if (!lastEvent) return "";
+    const payload = lastEvent.payload as { candidate?: { id: string; tactic: string }; candidateId?: string };
+    const id = payload.candidate?.id ?? payload.candidateId ?? "";
+    switch (lastEvent.stage) {
+      case "generated":
+        return `${id} ${payload.candidate?.tactic ?? ""} proposed`;
+      case "certified":
+        return `${id} certified: exploit confirmed by the solver`;
+      case "rejected":
+        return `${id} rejected by the solver`;
+      case "invalid":
+        return `${id} invalid: failed validation`;
+      case "inconclusive":
+        return `${id} inconclusive`;
+      default:
+        return "";
+    }
+  }, [lastEvent]);
+
   async function start() {
     setStarting(true);
     setError(null);
@@ -120,6 +141,10 @@ export function AttackArena({ projectId, slug, isDemoTemplate }: { projectId: st
 
       {runId && (
         <>
+          <div aria-live="polite" className="sr-only">
+            {announcement}
+          </div>
+
           <div className="flex items-center gap-4 rounded-lg border border-border/60 bg-card px-4 py-2 text-sm">
             <span>{counts.generated} generated</span>
             <span>·</span>
@@ -131,7 +156,7 @@ export function AttackArena({ projectId, slug, isDemoTemplate }: { projectId: st
 
           <div className="flex flex-col gap-2">
             {candidates.map((c) => (
-              <div key={c.id} className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3">
+              <div key={c.id} className="chip-travel-in flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3">
                 <div>
                   <span className="font-mono text-xs text-muted-foreground">{c.id}</span> <span className="text-sm">{c.tactic}</span>
                 </div>

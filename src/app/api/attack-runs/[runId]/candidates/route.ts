@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { attackCandidates, certificates, runs } from '@/db/schema';
 import { NotFoundError, toHttpError } from '@/server/errors';
-import { requireProjectAccess } from '@/server/workspace';
+import { parseUuidParam, requireProjectAccess } from '@/server/workspace';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(_request: Request, { params }: { params: Promise<{ runId: string }> }) {
   try {
     const { runId } = await params;
+    parseUuidParam('runId', runId);
 
     const run = await db.query.runs.findFirst({ where: eq(runs.id, runId) });
     if (!run) throw new NotFoundError(`run '${runId}' not found`);

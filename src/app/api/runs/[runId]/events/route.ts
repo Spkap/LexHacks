@@ -1,6 +1,9 @@
 import { and, asc, eq, gt } from 'drizzle-orm';
+import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { runEvents, runs } from '@/db/schema';
+import { NotFoundError, toHttpError } from '@/server/errors';
+import { parseUuidParam, requireProjectAccess } from '@/server/workspace';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,6 +13,17 @@ const HEARTBEAT_MS = 15000;
 
 export async function GET(request: Request, { params }: { params: Promise<{ runId: string }> }) {
   const { runId } = await params;
+
+  try {
+    parseUuidParam('runId', runId);
+    const run = await db.query.runs.findFirst({ where: eq(runs.id, runId) });
+    if (!run) throw new NotFoundError(`run '${runId}' not found`);
+    await requireProjectAccess(run.projectId, 'read');
+  } catch (error) {
+    const { status, body } = toHttpError(error);
+    return NextResponse.json(body, { status });
+  }
+
   const lastEventIdHeader = request.headers.get('last-event-id');
   const parsedLastSeq = lastEventIdHeader ? Number.parseInt(lastEventIdHeader, 10) : 0;
   let lastSeq = Number.isFinite(parsedLastSeq) ? parsedLastSeq : 0;

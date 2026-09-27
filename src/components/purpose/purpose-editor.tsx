@@ -54,24 +54,28 @@ export function PurposeEditor({ projectId, initial, fixtureCount }: Props) {
       <div className="rounded-lg border border-border/60 bg-card p-4 text-lg leading-relaxed">
         For{" "}
         <input
+          aria-label="Protected class"
           className="inline-block w-40 rounded border-b border-repair bg-transparent px-1 font-medium"
           value={protectedClass}
           onChange={(e) => setProtectedClass(e.target.value)}
         />
         , prevent{" "}
         <input
+          aria-label="Outcome to prevent"
           className="inline-block w-64 rounded border-b border-repair bg-transparent px-1 font-medium"
           value={preventOutcome}
           onChange={(e) => setPreventOutcome(e.target.value)}
         />{" "}
         without{" "}
         <input
+          aria-label="Required condition (without)"
           className="inline-block w-40 rounded border-b border-repair bg-transparent px-1 font-medium"
           value={without}
           onChange={(e) => setWithout(e.target.value)}
         />
         , even when{" "}
         <input
+          aria-label="Applies even when"
           className="inline-block w-48 rounded border-b border-repair bg-transparent px-1 font-medium"
           value={evenWhen}
           onChange={(e) => setEvenWhen(e.target.value)}
@@ -80,15 +84,21 @@ export function PurposeEditor({ projectId, initial, fixtureCount }: Props) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium">Invariant statement (plain English)</label>
+        <label htmlFor="invariant-statement" className="text-sm font-medium">
+          Invariant statement (plain English)
+        </label>
         <textarea
+          id="invariant-statement"
           className="rounded-md border border-border p-2 text-sm"
           rows={2}
           value={statement}
           onChange={(e) => setStatement(e.target.value)}
         />
-        <label className="text-sm font-medium">Invariant formula (DSL)</label>
+        <label htmlFor="invariant-formula" className="text-sm font-medium">
+          Invariant formula (DSL)
+        </label>
         <textarea
+          id="invariant-formula"
           className="rounded-md border border-border p-2 font-mono text-sm"
           rows={2}
           value={holds}

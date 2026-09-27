@@ -28,9 +28,13 @@ interface FakeWorkspace {
   tokenHash: string;
 }
 
+const PUBLIC_PROJECT_ID = '11111111-1111-4111-8111-111111111111';
+const PRIVATE_PROJECT_ID = '22222222-2222-4222-8222-222222222222';
+const MISSING_PROJECT_ID = '33333333-3333-4333-8333-333333333333';
+
 const projectsTable: FakeProject[] = [
-  { id: 'public-project', workspaceId: 'owner-ws', isPublic: true },
-  { id: 'private-project', workspaceId: 'owner-ws', isPublic: false },
+  { id: PUBLIC_PROJECT_ID, workspaceId: 'owner-ws', isPublic: true },
+  { id: PRIVATE_PROJECT_ID, workspaceId: 'owner-ws', isPublic: false },
 ];
 const workspacesTable: FakeWorkspace[] = [{ id: 'owner-ws', tokenHash: 'owner-hash' }];
 
@@ -63,28 +67,34 @@ describe('requireProjectAccess', () => {
 
   it('allows anyone to read a public project without a workspace cookie', async () => {
     const { requireProjectAccess } = await import('../workspace');
-    const { project } = await requireProjectAccess('public-project', 'read');
-    expect(project.id).toBe('public-project');
+    const { project } = await requireProjectAccess(PUBLIC_PROJECT_ID, 'read');
+    expect(project.id).toBe(PUBLIC_PROJECT_ID);
     expect(cookieStore.has('lh_ws')).toBe(false);
   });
 
   it('404s on a project that does not exist', async () => {
     const { requireProjectAccess, } = await import('../workspace');
     const { NotFoundError } = await import('../errors');
-    await expect(requireProjectAccess('missing-project', 'read')).rejects.toBeInstanceOf(NotFoundError);
+    await expect(requireProjectAccess(MISSING_PROJECT_ID, 'read')).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it('403s a write from a foreign workspace', async () => {
     cookieStore.set('lh_ws', 'not-the-owner-token');
     const { requireProjectAccess } = await import('../workspace');
     const { ForbiddenError } = await import('../errors');
-    await expect(requireProjectAccess('private-project', 'write')).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(requireProjectAccess(PRIVATE_PROJECT_ID, 'write')).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   it('403s a read of a private project from a foreign workspace', async () => {
     cookieStore.set('lh_ws', 'not-the-owner-token');
     const { requireProjectAccess } = await import('../workspace');
     const { ForbiddenError } = await import('../errors');
-    await expect(requireProjectAccess('private-project', 'read')).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(requireProjectAccess(PRIVATE_PROJECT_ID, 'read')).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it('400s a malformed (non-UUID) projectId before touching the database', async () => {
+    const { requireProjectAccess } = await import('../workspace');
+    const { ZodError } = await import('zod');
+    await expect(requireProjectAccess('not-a-uuid', 'read')).rejects.toBeInstanceOf(ZodError);
   });
 });

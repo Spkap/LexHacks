@@ -1,9 +1,14 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
+import { z } from 'zod';
 import { db } from '@/db/client';
 import { projects, workspaces } from '@/db/schema';
 import { ForbiddenError, NotFoundError } from './errors';
+
+export function parseUuidParam(name: string, value: string): string {
+  return z.object({ [name]: z.string().uuid() }).parse({ [name]: value })[name];
+}
 
 const COOKIE_NAME = 'lh_ws';
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -46,6 +51,7 @@ export async function requireProjectAccess(
   projectId: string,
   mode: AccessMode,
 ): Promise<{ project: typeof projects.$inferSelect; workspaceId: string | null }> {
+  parseUuidParam('projectId', projectId);
   const project = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
   if (!project) throw new NotFoundError(`project '${projectId}' not found`);
 

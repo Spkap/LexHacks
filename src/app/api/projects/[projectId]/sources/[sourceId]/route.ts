@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db/client';
 import { sourceSpans, sources } from '@/db/schema';
 import { NotFoundError, toHttpError } from '@/server/errors';
-import { requireProjectAccess } from '@/server/workspace';
+import { parseUuidParam, requireProjectAccess } from '@/server/workspace';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(_request: Request, { params }: { params: Promise<{ projectId: string; sourceId: string }> }) {
   try {
     const { projectId, sourceId } = await params;
+    parseUuidParam('sourceId', sourceId);
     const { project } = await requireProjectAccess(projectId, 'read');
 
     const source = await db.query.sources.findFirst({ where: eq(sources.id, sourceId) });

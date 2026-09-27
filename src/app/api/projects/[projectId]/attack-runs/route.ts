@@ -9,7 +9,8 @@ import { db } from '@/db/client';
 import { formalizations, purposeContracts } from '@/db/schema';
 import { runAttackPipeline } from '@/server/attack-run';
 import { GateError } from '@/core/engine';
-import { NotFoundError, toHttpError } from '@/server/errors';
+import { NotFoundError, RateLimitError, toHttpError } from '@/server/errors';
+import { rateLimit } from '@/server/rate-limit';
 import { runExecutor, type Emit } from '@/server/runs';
 import { requireProjectAccess } from '@/server/workspace';
 
@@ -17,12 +18,21 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-const Body = z.object({
-  mode: z.enum(['demo', 'live']).default('live'),
-  tactics: z.array(Tactic).min(1).max(9),
-  budgetPerTactic: z.number().int().min(1).max(4),
-  solverSearch: z.boolean().default(false),
-});
+// Global run budget: at most 40 candidates per run (tactic-generated plus solver-native
+// search, which contributes up to SOLVER_SEARCH_LIMIT=5 per invariant in attack-run.ts).
+const MAX_CANDIDATES = 40;
+const SOLVER_SEARCH_BUDGET = 5;
+
+const Body = z
+  .object({
+    mode: z.enum(['demo', 'live']).default('live'),
+    tactics: z.array(Tactic).min(1).max(9),
+    budgetPerTactic: z.number().int().min(1).max(4),
+    solverSearch: z.boolean().default(false),
+  })
+  .refine((b) => b.tactics.length * b.budgetPerTactic + (b.solverSearch ? SOLVER_SEARCH_BUDGET : 0) <= MAX_CANDIDATES, {
+    message: `tactics.length * budgetPerTactic (plus ${SOLVER_SEARCH_BUDGET} if solverSearch) must not exceed ${MAX_CANDIDATES}`,
+  });
 
 function loadDemoCandidates(): Candidate[] {
   const path = join(process.cwd(), 'fixtures', 'golden', 'ccpa-2018', 'candidates.original.json');
@@ -33,7 +43,10 @@ function loadDemoCandidates(): Candidate[] {
 export async function POST(request: Request, { params }: { params: Promise<{ projectId: string }> }) {
   try {
     const { projectId } = await params;
-    const { project } = await requireProjectAccess(projectId, 'write');
+    const { project, workspaceId } = await requireProjectAccess(projectId, 'write');
+
+    const limit = rateLimit(`attack-run:${workspaceId ?? projectId}`, 20, 3600);
+    if (!limit.ok) throw new RateLimitError('too many attack runs this hour');
 
     const json = await request.json();
     const body = Body.parse(json);

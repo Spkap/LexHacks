@@ -25,6 +25,7 @@ async function logModelCall(args: {
   promptHash: string;
   usage: unknown;
   mode: 'demo' | 'live';
+  ok: boolean;
 }): Promise<void> {
   if (!args.runId) return;
   await db.insert(modelCalls).values({
@@ -34,6 +35,7 @@ async function logModelCall(args: {
     promptHash: args.promptHash,
     usage: args.usage as object,
     mode: args.mode,
+    ok: args.ok,
   });
 }
 
@@ -62,20 +64,23 @@ export async function callStructured<T>(stage: string, args: CallStructuredArgs<
 
   try {
     const first = await attempt('groq');
-    await logModelCall({ runId: args.runId, stage, model: first.model, promptHash, usage: first.usage, mode });
+    await logModelCall({ runId: args.runId, stage, model: first.model, promptHash, usage: first.usage, mode, ok: true });
     return { ok: true, data: first.output };
   } catch (firstError) {
+    await logModelCall({ runId: args.runId, stage, model: modelId, promptHash, usage: null, mode, ok: false });
     try {
       const zodMessage = firstError instanceof Error ? firstError.message : String(firstError);
       const retry = await attempt('groq', `Your previous output failed validation: ${zodMessage}\nFix it and return valid output.`);
-      await logModelCall({ runId: args.runId, stage, model: retry.model, promptHash, usage: retry.usage, mode });
+      await logModelCall({ runId: args.runId, stage, model: retry.model, promptHash, usage: retry.usage, mode, ok: true });
       return { ok: true, data: retry.output };
     } catch {
+      await logModelCall({ runId: args.runId, stage, model: modelId, promptHash, usage: null, mode, ok: false });
       try {
         const fallback = await attempt('openrouter');
-        await logModelCall({ runId: args.runId, stage, model: fallback.model, promptHash, usage: fallback.usage, mode });
+        await logModelCall({ runId: args.runId, stage, model: fallback.model, promptHash, usage: fallback.usage, mode, ok: true });
         return { ok: true, data: fallback.output };
       } catch (finalError) {
+        await logModelCall({ runId: args.runId, stage, model: FALLBACK_MODEL, promptHash, usage: null, mode, ok: false });
         return { ok: false, error: finalError instanceof Error ? finalError.message : String(finalError) };
       }
     }

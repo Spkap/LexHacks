@@ -7,9 +7,10 @@ import { Candidate, Tactic, type Formalization, type PurposeContract } from '@/c
 import { db } from '@/db/client';
 import { attackCandidates, certificates, formalizations, purposeContracts, repairs, testFixtures } from '@/db/schema';
 import { runAttackPipeline } from '@/server/attack-run';
-import { NotFoundError, toHttpError } from '@/server/errors';
+import { NotFoundError, RateLimitError, toHttpError } from '@/server/errors';
+import { rateLimit } from '@/server/rate-limit';
 import { runExecutor, type Emit } from '@/server/runs';
-import { requireProjectAccess } from '@/server/workspace';
+import { parseUuidParam, requireProjectAccess } from '@/server/workspace';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,7 @@ const Body = z.object({ freshAttackTactics: z.array(Tactic).max(9).default([]) }
 export async function POST(request: Request, { params }: { params: Promise<{ repairId: string }> }) {
   try {
     const { repairId } = await params;
+    parseUuidParam('repairId', repairId);
 
     const repairRow = await db.query.repairs.findFirst({ where: eq(repairs.id, repairId) });
     if (!repairRow) throw new NotFoundError(`repair '${repairId}' not found`);
@@ -30,7 +32,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ rep
     const repairedFormalizationRow = await db.query.formalizations.findFirst({ where: eq(formalizations.id, repairRow.repairedFormalizationId) });
     if (!repairedFormalizationRow) throw new NotFoundError('repair references a missing repaired formalization');
 
-    const { project } = await requireProjectAccess(repairedFormalizationRow.projectId, 'write');
+    const { project, workspaceId } = await requireProjectAccess(repairedFormalizationRow.projectId, 'write');
+
+    const limit = rateLimit(`retest-run:${workspaceId ?? project.id}`, 20, 3600);
+    if (!limit.ok) throw new RateLimitError('too many retest runs this hour');
 
     const json = await request.json().catch(() => ({}));
     const body = Body.parse(json);

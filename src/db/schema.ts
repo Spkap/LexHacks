@@ -146,6 +146,9 @@ export const modelCalls = pgTable('model_calls', {
   schemaVersion: integer('schema_version').notNull().default(1),
   usage: jsonb('usage'),
   mode: text('mode', { enum: ['demo', 'live'] }).notNull(),
+  // Every attempt is logged (not only the winning one), so schema-validity rate
+  // (scripts/eval.ts) reflects real outcomes rather than only successes.
+  ok: boolean('ok').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('model_calls_run_id_idx').on(t.runId)]);
 

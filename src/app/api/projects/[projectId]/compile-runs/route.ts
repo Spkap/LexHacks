@@ -7,7 +7,8 @@ import { runDualExtraction } from '@/ai/extract';
 import { db } from '@/db/client';
 import { formalizations, sourceSpans, sources } from '@/db/schema';
 import { logAudit } from '@/server/audit';
-import { NotFoundError, toHttpError } from '@/server/errors';
+import { NotFoundError, RateLimitError, toHttpError } from '@/server/errors';
+import { rateLimit } from '@/server/rate-limit';
 import { runExecutor, type Emit } from '@/server/runs';
 import { requireProjectAccess } from '@/server/workspace';
 
@@ -23,7 +24,10 @@ const Body = z.object({
 export async function POST(request: Request, { params }: { params: Promise<{ projectId: string }> }) {
   try {
     const { projectId } = await params;
-    const { project } = await requireProjectAccess(projectId, 'write');
+    const { project, workspaceId } = await requireProjectAccess(projectId, 'write');
+
+    const limit = rateLimit(`compile-run:${workspaceId ?? projectId}`, 20, 3600);
+    if (!limit.ok) throw new RateLimitError('too many compile runs this hour');
 
     const json = await request.json().catch(() => ({}));
     const body = Body.parse(json);

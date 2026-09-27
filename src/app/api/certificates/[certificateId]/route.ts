@@ -5,7 +5,7 @@ import type { SolveStatus } from '@/core/engine';
 import { db } from '@/db/client';
 import { attackCandidates, certificates, runs } from '@/db/schema';
 import { NotFoundError, toHttpError } from '@/server/errors';
-import { requireProjectAccess } from '@/server/workspace';
+import { parseUuidParam, requireProjectAccess } from '@/server/workspace';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,6 +13,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(_request: Request, { params }: { params: Promise<{ certificateId: string }> }) {
   try {
     const { certificateId } = await params;
+    parseUuidParam('certificateId', certificateId);
 
     const row = await db.query.certificates.findFirst({ where: eq(certificates.id, certificateId) });
     if (!row) throw new NotFoundError(`certificate '${certificateId}' not found`);
