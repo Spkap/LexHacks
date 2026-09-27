@@ -43,14 +43,14 @@ Living checklist. Check off a phase/task only after its `Commit` step actually r
 
 - [x] [Phase 0: Scaffold](#phase-0-scaffold-h0-to-h1) — done
   - [x] Task 0.1: Create the Next.js app in place
-- [ ] [Phase 1: Proof engine and kill test](#phase-1-proof-engine-and-kill-test-h1-to-h6)
-  - [ ] Task 1.1: Canonical JSON and hashing
-  - [ ] Task 1.2: Formula DSL (parser, printer, typecheck)
-  - [ ] Task 1.3: Legal IR schemas
-  - [ ] Task 1.4: Z3 singleton, compiler, engine
-  - [ ] Task 1.5: Golden fixture files
-  - [ ] Task 1.6: THE KILL TEST (gate, see Workflow rules in CLAUDE.md/AGENTS.md)
-  - [ ] Task 1.7: Prove Z3 runs on Vercel
+- [x] [Phase 1: Proof engine and kill test](#phase-1-proof-engine-and-kill-test-h1-to-h6) — done
+  - [x] Task 1.1: Canonical JSON and hashing
+  - [x] Task 1.2: Formula DSL (parser, printer, typecheck)
+  - [x] Task 1.3: Legal IR schemas
+  - [x] Task 1.4: Z3 singleton, compiler, engine
+  - [x] Task 1.5: Golden fixture files
+  - [x] Task 1.6: THE KILL TEST (gate, see Workflow rules in CLAUDE.md/AGENTS.md)
+  - [x] Task 1.7: Prove Z3 runs on Vercel
 - [ ] [Phase 2: Persistence, runs, API](#phase-2-persistence-runs-api-h6-to-h12)
   - [ ] Task 2.1: Drizzle schema on Neon
   - [ ] Task 2.2: Seed the golden project
