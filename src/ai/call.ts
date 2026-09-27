@@ -16,6 +16,7 @@ export interface CallStructuredArgs<T> {
   system: string;
   prompt: string;
   mode?: 'demo' | 'live';
+  temperature?: number;
 }
 
 async function logModelCall(args: {
@@ -57,6 +58,7 @@ export async function callStructured<T>(stage: string, args: CallStructuredArgs<
       output: Output.object({ schema: args.schema }),
       system: extraSystem ? `${args.system}\n\n${extraSystem}` : args.system,
       prompt: args.prompt,
+      temperature: args.temperature,
       abortSignal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
     });
     return { output, usage, model: provider === 'groq' ? modelId : FALLBACK_MODEL };
