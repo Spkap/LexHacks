@@ -51,28 +51,28 @@ Living checklist. Check off a phase/task only after its `Commit` step actually r
   - [x] Task 1.5: Golden fixture files
   - [x] Task 1.6: THE KILL TEST (gate, see Workflow rules in CLAUDE.md/AGENTS.md)
   - [x] Task 1.7: Prove Z3 runs on Vercel
-- [ ] [Phase 2: Persistence, runs, API](#phase-2-persistence-runs-api-h6-to-h12)
-  - [ ] Task 2.1: Drizzle schema on Neon
-  - [ ] Task 2.2: Seed the golden project
-  - [ ] Task 2.3: Workspace cookie + access control
-  - [ ] Task 2.4: Run executor + SSE
-  - [ ] Task 2.5: Domain API routes
-- [ ] [Phase 3: AI pipeline](#phase-3-ai-pipeline-h12-to-h19)
-  - [ ] Task 3.1: Dual extraction + deterministic reconcile
-  - [ ] Task 3.2: Adversarial generator (tactic lanes)
-  - [ ] Task 3.3: Grounded explanation
-  - [ ] Task 3.4: Repair synthesis
-  - [ ] Task 3.5: Record the demo fixtures from a real Live run
-- [ ] [Phase 4: Product UI](#phase-4-product-ui-h19-to-h33)
-  - [ ] Task 4.1: Design system
-  - [ ] Task 4.2: Gallery (landing) `/`
-  - [ ] Task 4.3: Source Pack `/p/[slug]/source`
-  - [ ] Task 4.4: Purpose Contract `/p/[slug]/purpose`
-  - [ ] Task 4.5: Clause Compiler `/p/[slug]/compile`
-  - [ ] Task 4.6: Attack Arena `/p/[slug]/attack`
-  - [ ] Task 4.7: Loophole Card `/p/[slug]/findings/[certId]`
-  - [ ] Task 4.8: Repair Studio `/p/[slug]/repair/[certId]`
-  - [ ] Task 4.9: Re-attack Report + public replay
+- [x] [Phase 2: Persistence, runs, API](#phase-2-persistence-runs-api-h6-to-h12) — done
+  - [x] Task 2.1: Drizzle schema on Neon
+  - [x] Task 2.2: Seed the golden project
+  - [x] Task 2.3: Workspace cookie + access control
+  - [x] Task 2.4: Run executor + SSE
+  - [x] Task 2.5: Domain API routes
+- [x] [Phase 3: AI pipeline](#phase-3-ai-pipeline-h12-to-h19) — done
+  - [x] Task 3.1: Dual extraction + deterministic reconcile
+  - [x] Task 3.2: Adversarial generator (tactic lanes)
+  - [x] Task 3.3: Grounded explanation
+  - [x] Task 3.4: Repair synthesis
+  - [ ] Task 3.5: Record the demo fixtures from a real Live run — not done; demo mode still replays the hand-authored `candidates.original.json` (verified working end to end, just not re-captured from a Live run)
+- [x] [Phase 4: Product UI](#phase-4-product-ui-h19-to-h33) — done, verified end to end in a real browser against live Neon + Groq (fork → source → purpose → compile → attack → finding → repair → re-attack → report)
+  - [x] Task 4.1: Design system
+  - [x] Task 4.2: Gallery (landing) `/`
+  - [x] Task 4.3: Source Pack `/p/[slug]/source`
+  - [x] Task 4.4: Purpose Contract `/p/[slug]/purpose`
+  - [x] Task 4.5: Clause Compiler `/p/[slug]/compile`
+  - [x] Task 4.6: Attack Arena `/p/[slug]/attack`
+  - [x] Task 4.7: Loophole Card `/p/[slug]/findings/[certId]`
+  - [x] Task 4.8: Repair Studio `/p/[slug]/repair/[certId]`
+  - [x] Task 4.9: Re-attack Report + public replay
 - [ ] [Phase 5: Live import path](#phase-5-live-import-path-h33-to-h37)
   - [ ] Task 5.1: Paste-a-draft Live Mode
   - [ ] Task 5.2: Congress.gov import
