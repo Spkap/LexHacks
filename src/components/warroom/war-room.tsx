@@ -14,7 +14,7 @@ import { PatchPanel } from "./patch-panel";
 import { initialState, reducer, type Chip, type HydrateCandidate, type WarRoomState } from "./reducer";
 
 export interface WarRoomInitial {
-  project: { id: string; slug: string; name: string };
+  project: { id: string; slug: string; name: string; demoTemplate: string | null };
   source: { id: string; sha256: string } | null;
   spans: Span[];
   purpose: PurposeContract | undefined;
@@ -36,7 +36,11 @@ export function WarRoom({ initial }: { initial: WarRoomInitial }) {
   const [runId, setRunId] = useState<string | null>(null);
   const [purpose, setPurpose] = useState(initial.purpose);
   const [purposeSheetOpen, setPurposeSheetOpen] = useState(false);
-  const mode = searchParams.get("demo") === "1" ? "demo" : "live";
+  const mode = searchParams.get("live") === "1"
+    ? "live"
+    : searchParams.get("demo") === "1" || initial.project.demoTemplate === "ccpa-2018"
+      ? "demo"
+      : "live";
 
   const onEvent = useCallback((event: RunEventPayload) => dispatch({ type: "event", event }), []);
   useRunEvents(runId, onEvent);
@@ -87,7 +91,7 @@ export function WarRoom({ initial }: { initial: WarRoomInitial }) {
     .flatMap((c) => c.quotes.map((q) => q.spanId));
 
   return (
-    <div className="flex h-dvh flex-col">
+    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-paper">
       <MissionBar
         title={initial.project.name}
         sha={initial.source?.sha256 ?? ""}
@@ -96,18 +100,19 @@ export function WarRoom({ initial }: { initial: WarRoomInitial }) {
         counts={state.counts}
         attackRunning={state.attackRunning}
         canAttack={Boolean(purpose)}
+        demoMode={mode === "demo"}
         onAttack={startAttack}
         onEditPurpose={() => setPurposeSheetOpen(true)}
       />
 
-      <div className="grid flex-1 grid-cols-1 overflow-hidden md:grid-cols-2">
-        <div className="overflow-y-auto border-r border-border/60">
+      <main className="grid min-h-0 w-full flex-1 grid-cols-1 grid-rows-2 overflow-hidden lg:grid-cols-2 lg:grid-rows-1">
+        <div className="min-h-0 overflow-y-auto border-b border-ink/[0.08] lg:border-b-0 lg:border-r">
           <BillPanel spans={initial.spans} activeSpanIds={state.activeSpanIds} heatSpanIds={heatSpanIds} />
         </div>
-        <div className="overflow-y-auto bg-ink">
-          <Arena chips={state.order.map((id) => state.chips[id])} onOpen={openDrawer} />
+        <div className="min-h-0 overflow-y-auto bg-[#16201f]">
+          <Arena chips={state.order.map((id) => state.chips[id])} attackRunning={state.attackRunning} onOpen={openDrawer} />
         </div>
-      </div>
+      </main>
 
       {patchChip && (
         <PatchPanel
@@ -135,10 +140,13 @@ export function WarRoom({ initial }: { initial: WarRoomInitial }) {
       />
 
       {loopholeChip === null && state.patched && state.checks.old_loopholes.done && state.checks.fresh_attack.done && state.checks.legit_uses.done && (
-        <div className="border-t border-border/60 bg-verified/10 p-3 text-center text-sm font-medium text-verified">
-          {state.counts.confirmed} loopholes → {state.checks.old_loopholes.done.pending} still open. {state.checks.legit_uses.done.detail}.{" "}
-          <a href={`/r/${initial.project.slug}`} className="underline">
-            Share replay
+        <div className="flex items-center justify-center gap-3 border-t border-verified/20 bg-verified/8 px-4 py-2.5 text-sm font-medium text-verified">
+          <span className="text-base">✓</span>
+          <span>
+            {state.counts.confirmed} loopholes patched. {state.checks.legit_uses.done.detail}.
+          </span>
+          <a href={`/r/${initial.project.slug}`} className="ml-1 underline underline-offset-2 opacity-70 hover:opacity-100 transition-opacity">
+            Share results
           </a>
         </div>
       )}

@@ -4,7 +4,7 @@ test.setTimeout(90_000);
 
 test('golden CCPA benchmark: attack, verify, repair, re-attack, and share', async ({ page }) => {
   await page.goto('/?demo=1');
-  await page.getByRole('button', { name: 'Watch it catch a real loophole' }).click();
+  await page.getByRole('button', { name: 'Open the CCPA demo' }).click();
   await page.waitForURL(/\/a\/ccpa-2018-fork-[a-f0-9]+\?demo=1$/, { timeout: 30_000 });
 
   await expect(page.getByText(/sha [0-9a-f]{8}/)).toBeVisible();
@@ -22,12 +22,12 @@ test('golden CCPA benchmark: attack, verify, repair, re-attack, and share', asyn
   await page.getByRole('button', { name: 'Draft a repair' }).click();
   await expect(page.getByRole('button', { name: 'Approve patch' })).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Try the lazy fix' }).click();
-  await expect(page.getByText('G1: ✕ banned by the lazy fix')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText('G1: ✕ banned by lazy fix')).toBeVisible({ timeout: 60_000 });
   await page.getByRole('button', { name: 'Approve patch' }).click();
 
   await expect(page.getByText('3/3 legitimate uses kept')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText('3 loopholes → 0 still open.')).toBeVisible({ timeout: 30_000 });
-  await page.getByRole('link', { name: 'Share replay' }).click();
+  await page.getByRole('link', { name: 'Share results' }).click();
   await page.waitForURL(/\/r\/ccpa-2018-fork-[a-f0-9]+$/, { timeout: 30_000 });
   await expect(page.getByRole('table')).toBeVisible();
 });

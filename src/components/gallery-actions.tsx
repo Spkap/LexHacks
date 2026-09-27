@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,12 +15,15 @@ import { Textarea } from "@/components/ui/textarea";
 
 export function GalleryActions() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [loading, setLoading] = useState<"benchmark" | "paste" | null>(null);
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetch("/api/workspace", { method: "POST" });
+  }, []);
 
   async function runBenchmark() {
     setLoading("benchmark");
@@ -33,8 +36,7 @@ export function GalleryActions() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? data.error ?? "Failed to create project");
-      const demo = searchParams.get("demo") === "1";
-      router.push(`/a/${data.slug}${demo ? "?demo=1" : ""}`);
+      router.push(`/a/${data.slug}?demo=1`);
     } catch (e) {
       setError((e as Error).message);
       setLoading(null);
@@ -62,7 +64,7 @@ export function GalleryActions() {
   return (
     <div className="flex flex-col gap-4 sm:flex-row">
       <Button size="lg" className="bg-verified text-white hover:bg-verified/90" onClick={runBenchmark} disabled={loading !== null}>
-        {loading === "benchmark" ? "Forking…" : "Watch it catch a real loophole"}
+        {loading === "benchmark" ? "Preparing demo…" : "Open the CCPA demo"}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>

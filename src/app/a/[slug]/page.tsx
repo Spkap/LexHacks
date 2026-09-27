@@ -37,7 +37,7 @@ export default async function WarRoomPage({ params }: { params: Promise<{ slug: 
   return (
     <WarRoom
       initial={{
-        project: { id: data.project.id, slug: data.project.slug, name: data.project.name },
+        project: { id: data.project.id, slug: data.project.slug, name: data.project.name, demoTemplate: data.project.demoTemplate },
         source: data.source ? { id: data.source.id, sha256: data.source.sha256 } : null,
         spans: data.spans,
         purpose: data.purpose,

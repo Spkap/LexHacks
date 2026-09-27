@@ -17,15 +17,20 @@ function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-export async function getOrCreateWorkspace(): Promise<{ workspaceId: string }> {
+async function getWorkspaceFromCookie(): Promise<{ workspaceId: string } | null> {
   const cookieStore = await cookies();
-  const existingToken = cookieStore.get(COOKIE_NAME)?.value;
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (!token) return null;
 
-  if (existingToken) {
-    const workspace = await db.query.workspaces.findFirst({ where: eq(workspaces.tokenHash, hashToken(existingToken)) });
-    if (workspace) return { workspaceId: workspace.id };
-  }
+  const workspace = await db.query.workspaces.findFirst({ where: eq(workspaces.tokenHash, hashToken(token)) });
+  return workspace ? { workspaceId: workspace.id } : null;
+}
 
+export async function getOrCreateWorkspace(): Promise<{ workspaceId: string }> {
+  const existing = await getWorkspaceFromCookie();
+  if (existing) return existing;
+
+  const cookieStore = await cookies();
   const token = randomBytes(32).toString('base64url');
   const [workspace] = await db.insert(workspaces).values({ tokenHash: hashToken(token) }).returning();
 
@@ -59,7 +64,9 @@ export async function requireProjectAccess(
     return { project, workspaceId: null };
   }
 
-  const { workspaceId } = await getOrCreateWorkspace();
+  const workspace = await getWorkspaceFromCookie();
+  if (!workspace) throw new ForbiddenError('workspace cookie is missing or invalid');
+  const { workspaceId } = workspace;
   if (project.workspaceId !== workspaceId) {
     throw new ForbiddenError('this workspace does not own this project');
   }
