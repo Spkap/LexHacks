@@ -62,6 +62,26 @@ This is a hackathon sprint, not a marathon. Don't build out security scaffolding
 
 The one rule that stays: no secrets hardcoded in files, keep them in `process.env.X` / `.env.local`. If a task needs an API key or secret, ask for it whenever it comes up, then wire it in and move on.
 
+All required env vars are already in `.env.local`. Don't ask for them again.
+
+## Neon CLI
+
+Already authenticated (`neon me` works). Use the Neon CLI, not the Vercel Marketplace integration or the dashboard, for all Neon provisioning: creating projects, branches, databases, roles, and reading connection strings. Never hand-write a `DATABASE_URL` or ask the user for one, generate it with the CLI.
+
+```bash
+neon me                                                  # confirm auth / current account
+neon projects list                                       # existing projects
+neon projects create --name <name> --database neondb --set-context -o json
+neon branches create --name preview/<pr-number> --parent main   # per-PR preview branch
+neon branches list
+neon connection-string main --pooled --database-name neondb     # -> DATABASE_URL (runtime)
+neon connection-string main --database-name neondb               # -> DATABASE_DIRECT_URL (migrations)
+neon databases create --name <db> --branch <branch>
+neon branches delete preview/<pr-number>                 # teardown after PR merges/closes
+```
+
+`--set-context` after project creation pins it as default so later commands skip `--project-id`. Pooled connection string goes in `DATABASE_URL` (`drizzle-orm/neon-http` at runtime); direct connection string goes in `DATABASE_DIRECT_URL` (`drizzle.config.ts`, migrations only, never in the request path).
+
 ## Never use em dashes in any output
 
 Use a period, comma, or parentheses instead. Applies to chat, commit messages, code comments, docs, and UI copy.

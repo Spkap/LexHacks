@@ -37,6 +37,58 @@
 
 ---
 
+## Progress tracker
+
+Living checklist. Check off a phase/task only after its `Commit` step actually ran. Update this section as work lands, don't rely on memory across sessions, this is the resumability anchor.
+
+- [x] [Phase 0: Scaffold](#phase-0-scaffold-h0-to-h1) — done
+  - [x] Task 0.1: Create the Next.js app in place
+- [ ] [Phase 1: Proof engine and kill test](#phase-1-proof-engine-and-kill-test-h1-to-h6)
+  - [ ] Task 1.1: Canonical JSON and hashing
+  - [ ] Task 1.2: Formula DSL (parser, printer, typecheck)
+  - [ ] Task 1.3: Legal IR schemas
+  - [ ] Task 1.4: Z3 singleton, compiler, engine
+  - [ ] Task 1.5: Golden fixture files
+  - [ ] Task 1.6: THE KILL TEST (gate, see Workflow rules in CLAUDE.md/AGENTS.md)
+  - [ ] Task 1.7: Prove Z3 runs on Vercel
+- [ ] [Phase 2: Persistence, runs, API](#phase-2-persistence-runs-api-h6-to-h12)
+  - [ ] Task 2.1: Drizzle schema on Neon
+  - [ ] Task 2.2: Seed the golden project
+  - [ ] Task 2.3: Workspace cookie + access control
+  - [ ] Task 2.4: Run executor + SSE
+  - [ ] Task 2.5: Domain API routes
+- [ ] [Phase 3: AI pipeline](#phase-3-ai-pipeline-h12-to-h19)
+  - [ ] Task 3.1: Dual extraction + deterministic reconcile
+  - [ ] Task 3.2: Adversarial generator (tactic lanes)
+  - [ ] Task 3.3: Grounded explanation
+  - [ ] Task 3.4: Repair synthesis
+  - [ ] Task 3.5: Record the demo fixtures from a real Live run
+- [ ] [Phase 4: Product UI](#phase-4-product-ui-h19-to-h33)
+  - [ ] Task 4.1: Design system
+  - [ ] Task 4.2: Gallery (landing) `/`
+  - [ ] Task 4.3: Source Pack `/p/[slug]/source`
+  - [ ] Task 4.4: Purpose Contract `/p/[slug]/purpose`
+  - [ ] Task 4.5: Clause Compiler `/p/[slug]/compile`
+  - [ ] Task 4.6: Attack Arena `/p/[slug]/attack`
+  - [ ] Task 4.7: Loophole Card `/p/[slug]/findings/[certId]`
+  - [ ] Task 4.8: Repair Studio `/p/[slug]/repair/[certId]`
+  - [ ] Task 4.9: Re-attack Report + public replay
+- [ ] [Phase 5: Live import path](#phase-5-live-import-path-h33-to-h37)
+  - [ ] Task 5.1: Paste-a-draft Live Mode
+  - [ ] Task 5.2: Congress.gov import
+- [ ] [Phase 6: Hardening and tests](#phase-6-hardening-and-tests-h37-to-h42)
+  - [ ] Task 6.1: Security pass
+  - [ ] Task 6.2: Accessibility pass
+  - [ ] Task 6.3: Playwright demo spec
+  - [ ] Task 6.4: Evaluation table (for Devpost)
+- [ ] [Phase 7: Ship, video, Devpost](#phase-7-ship-video-devpost-h42-to-h48)
+  - [ ] Task 7.1: README
+  - [ ] Task 7.2: Video script
+  - [ ] Task 7.3: Devpost submission
+  - [ ] Task 7.4: Final pre-submit checklist
+
+---
+
 ## 1. Why this wins (judging map)
 
 | Criterion | Weight | What judges must see | Where it is built |
@@ -385,6 +437,8 @@ Clock = hours from start of build. Adjust to the actual submission deadline; kee
 
 ## Phase 0: Scaffold (H0 to H1)
 
+**Status:** done. See [Progress tracker](#progress-tracker).
+
 ### Task 0.1: Create the Next.js app in place
 
 **Files:** `package.json`, `next.config.ts`, `tsconfig.json`, `.gitignore`, `.env.example`, `vitest.config.ts`
@@ -440,7 +494,6 @@ REASONING_MODEL=openai/gpt-oss-120b
 FAST_MODEL=llama-3.1-8b-instant
 FALLBACK_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
 CONGRESS_GOV_API_KEY=
-WORKSPACE_COOKIE_SECRET=
 APP_BASE_URL=http://localhost:3000
 DEMO_MODE_DEFAULT=true
 ```
@@ -461,6 +514,8 @@ git add -A && git commit -m "chore: scaffold Next.js app with core dependencies"
 ---
 
 ## Phase 1: Proof engine and kill test (H1 to H6)
+
+**Status:** see [Progress tracker](#progress-tracker).
 
 The blueprint's four-hour kill test lives here. If Task 1.6 cannot pass, narrow the model; do not proceed to UI.
 
@@ -801,11 +856,31 @@ export const dynamic = 'force-dynamic';
 
 ## Phase 2: Persistence, runs, API (H6 to H12)
 
+**Status:** see [Progress tracker](#progress-tracker).
+
 ### Task 2.1: Drizzle schema on Neon
 
 **Files:** create `src/db/schema.ts`, `src/db/client.ts`, `drizzle.config.ts`; generated `drizzle/*.sql`
 
-Create a Neon project (Vercel Marketplace integration sets `DATABASE_URL`); use pooled URL at runtime (`drizzle-orm/neon-http`), direct URL in `drizzle.config.ts` for migrations.
+**Step 0: Provision via Neon CLI** (already authenticated, `neon me` confirms the account; don't use the Vercel Marketplace integration). All other env vars (`GROQ_API_KEY`, `OPENROUTER_API_KEY`, `CONGRESS_GOV_API_KEY`, `REGULATIONS_GOV_API_KEY`) are already filled in `.env.local`, don't ask for them again.
+
+```bash
+# Create the project (also creates the neondb database, owner role, and main branch);
+# --set-context pins it as default so later neon commands skip --project-id
+neon projects create --name loophole-lexhack --database neondb --set-context -o json
+
+# Pooled connection string (runtime, drizzle-orm/neon-http) -> DATABASE_URL
+neon connection-string main --pooled --database-name neondb
+
+# Direct connection string (migrations only, drizzle.config.ts) -> DATABASE_DIRECT_URL
+neon connection-string main --database-name neondb
+```
+
+Paste the pooled URL into `DATABASE_URL` and the direct URL into `DATABASE_DIRECT_URL` in `.env.local`.
+
+For per-PR preview branches (Vercel deployment, per AGENTS.md): `neon branches create --name preview/<pr-number> --parent main`, then `neon connection-string preview/<pr-number> --pooled --database-name neondb` for that branch's `DATABASE_URL` in the Vercel preview env. Tear down with `neon branches delete preview/<pr-number>` once the PR merges or closes.
+
+Use pooled URL at runtime (`drizzle-orm/neon-http`), direct URL in `drizzle.config.ts` for migrations.
 
 | Table | Columns (types) | Constraints / indexes |
 |---|---|---|
@@ -891,6 +966,8 @@ Route handler tests for 400 (bad body), 403 (foreign project), 409 (GateError), 
 
 ## Phase 3: AI pipeline (H12 to H19)
 
+**Status:** see [Progress tracker](#progress-tracker).
+
 All model calls in `src/ai/`. No AI Gateway (E-11a): `src/ai/models.ts` builds two direct provider instances from env, no gateway hop:
 
 ```ts
@@ -973,6 +1050,8 @@ Commit `chore(fixtures): record live AI outputs for deterministic demo mode`.
 
 ## Phase 4: Product UI (H19 to H33)
 
+**Status:** see [Progress tracker](#progress-tracker).
+
 ### Design system (Task 4.1)
 
 **Files:** `src/app/globals.css`, `src/app/layout.tsx`, `src/components/ui/*` (shadcn), `src/components/brand/*`
@@ -1036,6 +1115,8 @@ Screens 4.2 to 4.9 touch different route folders and can be built in parallel by
 
 ## Phase 5: Live import path (H33 to H37)
 
+**Status:** see [Progress tracker](#progress-tracker).
+
 ### Task 5.1: Paste-a-draft Live Mode
 
 `POST /api/projects { paste }` stores text + sha256, auto-splits into spans by section markers (`SEC.`, `Section`, `(a)` numbering) with a max of 20 selected spans; flows into compile run (Live). Max 60k characters; plain text only. Works for CA bills (SB-53, SB-833, AB-1609) copied from leginfo; UI label: "Attack target, no known finding promised."
@@ -1054,6 +1135,8 @@ Commit `feat(import): Congress.gov search and immutable text snapshot`.
 ---
 
 ## Phase 6: Hardening and tests (H37 to H42)
+
+**Status:** see [Progress tracker](#progress-tracker).
 
 ### Task 6.1: Security pass
 
@@ -1086,6 +1169,8 @@ Commits per task. Then **production deploy**: `vercel --prod`, run `pnpm seed` a
 ---
 
 ## Phase 7: Ship, video, Devpost (H42 to H48)
+
+**Status:** see [Progress tracker](#progress-tracker).
 
 ### Task 7.1: README
 
