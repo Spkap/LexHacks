@@ -44,9 +44,9 @@ This is what the team asked for, in their words, and it decides every trade-off 
 
 ## 1. Progress tracker
 
-- [ ] **Phase 0:** Commit the v2 docs
-- [ ] **Phase 1:** Trust core (TDD): IR, grounding gate, verdict rule, finding hash, redline
-- [ ] **Phase 2:** Agents: attack, jury, repair, purpose helper
+- [x] **Phase 0:** Commit the v2 docs
+- [x] **Phase 1:** Trust core (TDD): IR, grounding gate, verdict rule, finding hash, redline
+- [x] **Phase 2:** Agents: attack, jury, repair, purpose helper
 - [ ] **Phase 3:** Data + run pipelines + routes
 - [ ] **Phase 4:** PIVOT GATE (live golden runs, record Demo Mode fixtures) ← **gate: stop here if it fails**
 - [ ] **Phase 5:** War Room `/a/[slug]`
