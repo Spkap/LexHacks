@@ -2,6 +2,8 @@
 
 **AI finds the loopholes. You make the call.**
 
+**Demo video:** [Watch Loophole](https://youtu.be/txExNNDeeIE)
+
 Loophole is an adversarial red-teaming War Room for legislation, regulations, and institutional policies. A user pastes a draft bill and sets its policy intent. An Attack agent hunts for evasion loopholes, a deterministic code gate throws out any claim that does not quote the bill verbatim, a jury of three independent AI judges cross-examines every exploit, a human reviewer breaks ties with a gavel, and confirmed loopholes receive a surgical redline that is re-attacked in real time.
 
 The result is a testable pre-deployment workbench for rules: stress-testing statutory text before autonomous agents and motivated actors exploit it in the wild.
@@ -39,38 +41,19 @@ That means the demo is not just "an LLM summarized a bill." The demo shows an au
 ## Architecture
 
 ```mermaid
-flowchart LR
-    subgraph Inputs["Specification"]
-        Bill["Bill draft"]
-        Purpose["Purpose Contract"]
-    end
-
-    subgraph RedTeam["Red-team engine"]
-        Attacker["Attack Agent (9 lanes)"]
-        Gate["Grounding Gate (code, zero LLM)"]
-    end
-
-    subgraph Deliberation["Cross-examination"]
-        Jury["Jury of 3 judges"]
-        Gavel["Human Gavel (tie-break)"]
-    end
-
-    subgraph Remediation["Surgical patch"]
-        Repair["Repair Agent"]
-        Reattack["Three-way re-attack"]
-    end
-
-    Bill --> Attacker
-    Purpose --> Attacker
-    Attacker --> Gate
-    Gate -->|"quote verified"| Jury
-    Gate -->|"quote not in bill"| ThrownOut["Thrown out"]
-    Jury -->|"3/3 loophole"| Repair
-    Jury -->|"2+ blocked"| BlockedRecord["Blocked record"]
-    Jury -->|"jury split"| Gavel
-    Gavel -->|"confirmed"| Repair
-    Repair --> Reattack
-    Reattack --> PatchedBill["Patched bill version"]
+flowchart TD
+    Bill["Bill draft"] --> Attack["Attack Agent<br/>(9 lanes)"]
+    Purpose["Purpose Contract"] --> Attack
+    Attack --> Gate["Grounding Gate<br/>(code, zero LLM)"]
+    Gate -->|"quotes verified"| Jury["Defense Jury<br/>(3 independent judges)"]
+    Gate -->|"quote not in bill"| Rejected["Thrown out"]
+    Jury -->|"3/3 loophole"| Confirmed["Confirmed by adversarial review"]
+    Jury -->|"2+ blocked"| Blocked["Blocked record"]
+    Jury -->|"jury split"| Human["Human reviewer breaks tie"]
+    Human -->|"confirmed"| Confirmed
+    Confirmed --> Repair["Repair Agent proposes minimal redline"]
+    Repair --> Reattack["Three-way re-attack"]
+    Reattack --> Patched["Patched bill version"]
 ```
 
 ## Attack & Deliberation Sequence
