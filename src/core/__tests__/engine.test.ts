@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { buildCertificate, verifyCertificate } from '../certificate';
-import { certify, checkFixture, GateError } from '../engine';
+import { certify, checkFixture, enumerateCounterexamples, retest, GateError } from '../engine';
 import type { Candidate, Fixture, Formalization, PurposeContract } from '../ir';
+import { findCandidate, loadGolden } from './golden';
 
 function makeFormalization(ruleStatus: 'approved' | 'disputed' = 'approved'): Formalization {
   return {
@@ -148,3 +149,73 @@ describe('engine.checkFixture', () => {
     expect(result.pass).toBe(true);
   });
 });
+
+describe('golden CCPA 2018 case', () => {
+  const golden = loadGolden();
+
+  it('certifies C1 (no consideration) and C8 (affiliate, no contract, no consideration) on the original law', async () => {
+    for (const id of ['C1', 'C8']) {
+      const c = findCandidate(golden.candidates, id);
+      const result = await certify(golden.original, golden.purpose, c);
+      expect(result.status, `${id} should certify`).toBe('certified');
+      expect(result.result).toBe('sat');
+      expect(result.model?.consideration).toBe('none');
+    }
+  });
+
+  it('rejects C2..C7 on the original law', async () => {
+    for (const id of ['C2', 'C3', 'C4', 'C5', 'C6', 'C7']) {
+      const c = findCandidate(golden.candidates, id);
+      const result = await certify(golden.original, golden.purpose, c);
+      expect(result.status, `${id} should be rejected`).toBe('rejected');
+      expect(result.result).toBe('unsat');
+    }
+  });
+
+  it('keeps G1..G3 SAT on the original law', async () => {
+    for (const fx of golden.fixtures) {
+      const result = await checkFixture(golden.original, fx);
+      expect(result.pass, `${fx.id} should pass`).toBe(true);
+    }
+  });
+
+  it('repair closes C1 and C8 families (UNSAT) and preserves G1..G3', async () => {
+    const certified = [findCandidate(golden.candidates, 'C1'), findCandidate(golden.candidates, 'C8')];
+    const report = await retest(golden.repaired, golden.purpose, certified, golden.fixtures);
+    expect(report.allClosed).toBe(true);
+    expect(report.allPreserved).toBe(true);
+  });
+
+  it('overbroad repair fails at least one legitimate fixture', async () => {
+    const g1 = golden.fixtures.find((f) => f.id === 'G1');
+    if (!g1) throw new Error('G1 fixture missing');
+    const result = await checkFixture(golden.overbroad, g1);
+    expect(result.pass).toBe(false);
+  });
+
+  it('solver-native search finds the no-consideration class without AI', async () => {
+    const models = await enumerateCounterexamples(golden.original, golden.purpose, 'P1', ['recipient', 'consideration'], 5);
+    expect(models.length).toBeGreaterThan(0);
+    expect(models.some((m) => m.consideration === 'none')).toBe(true);
+  });
+
+  it('certificates reproduce: same inputs give the same hash', async () => {
+    const c1 = findCandidate(golden.candidates, 'C1');
+    const r1 = await certify(golden.original, golden.purpose, c1);
+    const r2 = await certify(golden.original, golden.purpose, c1);
+    const build = (r: typeof r1) =>
+      buildCertificate({
+        candidateId: c1.id,
+        formalizationHash: golden.original.id,
+        invariantHash: 'P1',
+        candidateHash: c1.id,
+        result: r.result,
+        model: r.model ?? null,
+        smtlib: r.smtlib,
+        solverVersion: 'test',
+        elapsedMs: r.elapsedMs,
+      });
+    expect(build(r1).hash).toBe(build(r2).hash);
+  });
+});
+
