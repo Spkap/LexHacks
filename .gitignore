@@ -1,1 +1,59 @@
-/tmp
+# Dependencies and package-manager state
+node_modules/
+.pnp/
+.pnp.*
+.npm/
+.pnpm-store/
+.yarn/
+!.yarn/releases/
+!.yarn/plugins/
+!.yarn/patches/
+!.yarn/sdks/
+!.yarn/versions/
+
+# Next.js, builds, and deployment tooling
+.next/
+out/
+dist/
+build/
+.turbo/
+.vercel/
+
+# Test output and generated reports
+coverage/
+playwright-report/
+test-results/
+blob-report/
+*.tsbuildinfo
+
+# Local environment and secrets. Commit only documented templates.
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.test
+
+# Local databases and ORM metadata
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Logs, caches, and temporary/generated working files
+*.log
+*.log.*
+logs/
+tmp/
+temp/
+.cache/
+.swc/
+
+# Local editor, OS, and assistant state
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.context/

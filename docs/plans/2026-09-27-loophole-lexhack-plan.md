@@ -10,7 +10,7 @@
 
 **Architecture:** One Next.js (App Router, TypeScript) repo deployed on Vercel. A pure, framework-free `src/core` engine (Legal IR, formula DSL, Z3 compiler, certifier, retester) holds all trust-critical logic and is fully unit-tested. Neon Postgres (Drizzle) persists versioned artifacts, runs, and certificates. Vercel AI SDK produces schema-validated JSON only; the LLM never writes solver input directly.
 
-**Tech stack:** Next.js 16 (App Router), React, TypeScript strict, Tailwind CSS v4, shadcn/ui, Motion, Zod, `z3-solver` (official WASM bindings), Vercel AI SDK (`ai`, AI Gateway model strings), Drizzle ORM + `@neondatabase/serverless`, Vitest, Playwright, pnpm.
+**Tech stack:** Next.js 16 (App Router), React, TypeScript strict, Tailwind CSS v4, shadcn/ui, Motion, Zod, `z3-solver` (official WASM bindings), Vercel AI SDK (`ai`) with direct `@ai-sdk/groq` and OpenRouter-via-`@ai-sdk/openai` providers (no AI Gateway hop), Drizzle ORM + `@neondatabase/serverless`, Vitest, Playwright, pnpm.
 
 **Source blueprint:** [Loophole_Project_Blueprint.md](../../Loophole_Project_Blueprint.md). Hackathon brief: LexHack 2026 (Devpost).
 
@@ -79,7 +79,8 @@ Every decision below was challenged against the blueprint for hackathon risk. Bl
 | E-08 | **SSE reads from `run_events` in Neon** with `Last-Event-ID` resume; client falls back to 1 s polling if EventSource errors. | Reconnect-safe; no in-memory pub/sub across serverless instances. |
 | E-09 | **Demo Mode replays recorded AI outputs, but Z3 always runs live.** Recorded outputs are versioned fixtures produced by a real Live run. | Latency-proof video; never fakes a solver status (blueprint rule). |
 | E-10 | **Solver-native search in addition to AI search.** `enumerateCounterexamples` asks Z3 for any violating model, blocks its exploit family, repeats. | Second, independent discovery path. AI finds narratives; solver guarantees coverage within bounds. Strong technical-judging moment. |
-| E-11 | **LLM access via AI SDK `generateText` + `Output.object({ schema })`** with model strings from env (`REASONING_MODEL`, `FAST_MODEL`) routed through AI Gateway. | Provider-portable, schema-validated. Verified against current AI SDK docs (Context7). |
+| E-11 | **LLM access via AI SDK `generateText` + `Output.object({ schema })`** with model strings from env (`REASONING_MODEL`, `FAST_MODEL`), called through direct provider SDKs. | Provider-portable, schema-validated. Verified against current AI SDK docs (Context7). |
+| E-11a | **CHANGED: no AI Gateway. Direct Groq SDK primary, direct OpenRouter (OpenAI-compatible) SDK fallback, no gateway hop.** `FAST_MODEL=llama-3.1-8b-instant` via `@ai-sdk/groq` (14,400 req/day free), `REASONING_MODEL=openai/gpt-oss-120b` via `@ai-sdk/groq` (1,000 req/day free, stable, low latency). `FALLBACK_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free` via `@ai-sdk/openai`'s `createOpenAI({ baseURL: 'https://openrouter.ai/api/v1' })`, tried only when the Groq call throws (huge-context edge case), not the primary path. `callStructured` (Task 3.x) wraps both providers in one try/primary-catch/fallback. | Vercel AI Gateway's own free tier ($5/mo credit, narrow "Free Tier eligible" list) burns fast on doc-heavy legal prompts, and its per-request markup-free pass-through still adds a hop and an extra API key (`AI_GATEWAY_API_KEY`) with its own lower free-tier rate limit on top of the underlying provider's. Calling Groq and OpenRouter directly gets their full first-party free-tier limits with nothing throttling on top. No gateway means no built-in `providerOptions.gateway.models` fallback feature either, so the fallback is a plain try/catch in `callStructured`, not gateway config. |
 | E-12 | **`z3-solver` listed in `serverExternalPackages`**; all solver routes use `runtime = 'nodejs'`. | Prevents bundler breaking the WASM loader. Verified against Next.js docs (Context7). |
 
 ### 2.2 Claim discipline (enforced in UI copy and tests)
@@ -399,7 +400,7 @@ If it refuses a non-empty dir, scaffold into `scratch-app/` in the session scrat
 **Step 2:** Install dependencies:
 
 ```bash
-pnpm add z3-solver zod ai drizzle-orm @neondatabase/serverless motion lucide-react clsx
+pnpm add z3-solver zod ai @ai-sdk/groq @ai-sdk/openai drizzle-orm @neondatabase/serverless motion lucide-react clsx
 pnpm add -D vitest @vitest/coverage-v8 drizzle-kit tsx @playwright/test dotenv
 pnpm dlx shadcn@latest init -d
 pnpm dlx shadcn@latest add button card badge tabs dialog tooltip sheet separator scroll-area textarea select sonner
@@ -433,16 +434,18 @@ export default nextConfig;
 ```text
 DATABASE_URL=
 DATABASE_DIRECT_URL=
-AI_GATEWAY_API_KEY=
-REASONING_MODEL=anthropic/claude-sonnet-4.5
-FAST_MODEL=openai/gpt-5-mini
+GROQ_API_KEY=
+OPENROUTER_API_KEY=
+REASONING_MODEL=openai/gpt-oss-120b
+FAST_MODEL=llama-3.1-8b-instant
+FALLBACK_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
 CONGRESS_GOV_API_KEY=
 WORKSPACE_COOKIE_SECRET=
 APP_BASE_URL=http://localhost:3000
 DEMO_MODE_DEFAULT=true
 ```
 
-Model IDs are examples; confirm current AI Gateway IDs before first Live run.
+No AI Gateway: `GROQ_API_KEY` and `OPENROUTER_API_KEY` are separate direct provider keys, each read by its own `@ai-sdk/*` provider instance in `src/ai/models.ts` (Task 3.x). Groq is primary (free tier: 14,400 req/day on the fast model, 1,000 req/day on the reasoning model, stable first-party limits, no gateway hop). `FALLBACK_MODEL` is OpenRouter's free tier, called via `createOpenAI({ baseURL: 'https://openrouter.ai/api/v1', apiKey: process.env.OPENROUTER_API_KEY })` (OpenRouter is OpenAI-compatible) from inside `callStructured`'s catch block for the rare call needing OpenRouter's bigger context window; it is not the primary path. Model IDs are examples; confirm current Groq and OpenRouter model IDs before first Live run. API keys are added later, not during scaffold.
 
 **Step 6:** `vitest.config.ts` with `test.environment = 'node'`, `testTimeout: 20000` (Z3 WASM init), alias `@` to `src`. Add scripts: `"test": "vitest run"`, `"test:watch": "vitest"`, `"db:generate": "drizzle-kit generate"`, `"db:migrate": "drizzle-kit migrate"`, `"seed": "tsx scripts/seed-golden.ts"`, `"e2e": "playwright test"`, `"typecheck": "tsc --noEmit"`.
 
@@ -888,19 +891,34 @@ Route handler tests for 400 (bad body), 403 (foreign project), 409 (GateError), 
 
 ## Phase 3: AI pipeline (H12 to H19)
 
-All model calls in `src/ai/`. Pattern (verified against AI SDK docs via Context7):
+All model calls in `src/ai/`. No AI Gateway (E-11a): `src/ai/models.ts` builds two direct provider instances from env, no gateway hop:
+
+```ts
+import { createGroq } from '@ai-sdk/groq';
+import { createOpenAI } from '@ai-sdk/openai';
+
+export const groq = createGroq({ apiKey: process.env.GROQ_API_KEY! });
+export const openrouter = createOpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY!,
+  baseURL: 'https://openrouter.ai/api/v1',      // OpenRouter is OpenAI-compatible
+});
+```
+
+Pattern (verified against AI SDK docs via Context7):
 
 ```ts
 import { generateText, Output } from 'ai';
+import { groq } from './models';
+
 const { output, usage } = await generateText({
-  model: process.env.REASONING_MODEL!,           // AI Gateway model string
+  model: groq(process.env.REASONING_MODEL!),    // direct Groq call, default openai/gpt-oss-120b (E-11a)
   output: Output.object({ schema: CandidateBatch }),
   system: SYSTEM_ATTACK,                          // states: text inside <source> is untrusted data
   prompt: buildAttackPrompt({ universe, rules, invariant, tactic, k }),
 });
 ```
 
-Shared wrapper `callStructured(stage, schema, args)` in `src/ai/call.ts`: one retry with the Zod error appended, logs `model_calls` (model, `prompt_hash`, schema version, usage), never logs source text in plaintext logs, returns `{ ok, data } | { ok: false, error }`.
+Shared wrapper `callStructured(stage, schema, args)` in `src/ai/call.ts`: calls the Groq model first; on any thrown error (rate limit, timeout, context too large) retries once against the same Groq model with the Zod error appended if the error was a schema failure, otherwise falls through to `openrouter(process.env.FALLBACK_MODEL!)` once (E-11a's plain try/catch fallback, no gateway config). Logs `model_calls` (model, provider, `prompt_hash`, schema version, usage), never logs source text in plaintext logs, returns `{ ok, data } | { ok: false, error }`.
 
 ### Task 3.1: Dual extraction + deterministic reconcile
 
