@@ -49,15 +49,27 @@ temp/
 .cache/
 .swc/
 
-# Local editor, OS, and assistant state
+# Local editor, OS, and cloud sync state
 .DS_Store
 Thumbs.db
+desktop.ini
+~$*
+*.tmp
+*.swp
+*.swo
 .idea/
 .vscode/
 !.vscode/extensions.json
 !.vscode/settings.json
+.cursor/
 .context/
-.vercel
+.gemini/
+.claude/
+
+# Scratchpads and personal notes
+scratch/
+docs/plans/ideas.md
+*.scratch.*
 
 # Local Neon CLI project context
-.neon
+.neon

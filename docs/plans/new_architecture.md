@@ -102,11 +102,11 @@ Failures show in the Arena as **Thrown out: quote not in bill**. That's a visibl
 
 Three judges, each a **different prompt** (same model, temperature 0). All get the same input: `scenario + full text of the quoted spans + Purpose Contract`. None sees `whyWordsPermit` or `whyPurposeDefeated`.
 
-| Judge | Reads the bill like | Brief |
-|---|---|---|
-| Textualist | the exact words | "Do these words forbid this conduct?" |
-| Purposivist | legislative intent | "Would a court read the purpose into these words to cover this?" |
-| Enforcer | a regulator | "Could I bring an enforcement action under this text today?" |
+| Judge       | Reads the bill like | Brief                                                            |
+| -------------| ---------------------| ------------------------------------------------------------------|
+| Textualist  | the exact words     | "Do these words forbid this conduct?"                            |
+| Purposivist | legislative intent  | "Would a court read the purpose into these words to cover this?" |
+| Enforcer    | a regulator         | "Could I bring an enforcement action under this text today?"     |
 
 Each judge answers both questions (forbidden? purpose defeated?) from its own angle, then picks one verdict.
 
