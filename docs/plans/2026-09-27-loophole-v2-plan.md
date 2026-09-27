@@ -49,7 +49,7 @@ This is what the team asked for, in their words, and it decides every trade-off 
 - [x] **Phase 2:** Agents: attack, jury, repair, purpose helper
 - [x] **Phase 3:** Data + run pipelines + routes
 - [x] **Phase 4:** PIVOT GATE (live golden runs, record Demo Mode fixtures) ← ran 3x; mechanism sound (zero ungrounded escapes, real re-attack pass on run 3) but C8 never landed "confirmed" and buckets don't match v1's solver-derived table (jury's textual reading is defensible, not a bug) -- proceeding per explicit instruction, not silently
-- [ ] **Phase 5:** War Room `/a/[slug]`
+- [x] **Phase 5:** War Room `/a/[slug]` -- core loop built and live-tested against real Groq pipeline; scoped down (no SVG connectors/motion choreography); mobile bottom-sheet, keyboard-nav audit, axe pass deferred
 - [ ] **Phase 6:** Landing `/` + replay `/r/[slug]` + legacy redirects
 - [ ] **Phase 7:** Delete Z3, update e2e, eval, deploy
 - [ ] **Phase 8:** Ship: README, video, Devpost
