@@ -83,7 +83,7 @@ describeIfDb('runExecutor (integration, real Neon DB)', () => {
       const { runEvents } = await import('@/db/schema');
       const inputHash = `hash-order-${Date.now()}`;
 
-      const { runId } = await runExecutor.start({ projectId, type: 'compile', mode: 'demo', inputHash }, async (emit) => {
+      const { runId } = await runExecutor.start({ projectId, type: 'attack', mode: 'demo', inputHash }, async (emit) => {
         await emit('stage-a', { step: 1 });
         await emit('stage-b', { step: 2 });
         await emit('stage-c', { step: 3 });

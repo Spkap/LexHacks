@@ -3,21 +3,8 @@ import { join } from 'node:path';
 import { config } from 'dotenv';
 import { eq } from 'drizzle-orm';
 import { hashOf } from '../src/core/canonical';
-import { certify } from '../src/core/engine';
-import { Candidate, Fixture, Formalization, PurposeContract, validateFormalization } from '../src/core/ir';
-import { getSolverVersion } from '../src/core/z3';
-import { buildCertificate } from '../src/core/certificate';
-import {
-  attackCandidates,
-  certificates,
-  formalizations,
-  projects,
-  purposeContracts,
-  runs,
-  sources,
-  sourceSpans,
-  testFixtures,
-} from '../src/db/schema';
+import { PurposeContract } from '../src/core/contracts';
+import { projects, purposeContracts, sources, sourceSpans, testFixtures } from '../src/db/schema';
 
 config({ path: '.env.local' });
 
@@ -45,7 +32,17 @@ interface SourceFile {
   sha256: string;
 }
 
+function assertNotPlaceholder(name: string): void {
+  const file = readJson(name) as { placeholder?: boolean };
+  if (file.placeholder && process.env.ALLOW_PLACEHOLDER !== '1') {
+    throw new Error(`${name} is still a placeholder (no real Live run recorded yet). Set ALLOW_PLACEHOLDER=1 to seed anyway for local UI work.`);
+  }
+}
+
 async function main() {
+  assertNotPlaceholder('jury.recorded.json');
+  assertNotPlaceholder('reattack.recorded.json');
+
   const { db } = await import('../src/db/client');
   const sourceFile = readJson('source.json') as SourceFile;
   const computedHash = hashOf(sourceFile.spans);
@@ -53,14 +50,7 @@ async function main() {
     throw new Error(`source.json sha256 mismatch: file says ${sourceFile.sha256}, recomputed ${computedHash}`);
   }
 
-  const original = Formalization.parse(readJson('formalization.original.json'));
   const purpose = PurposeContract.parse(readJson('purpose.json'));
-  const fixturesFile = (readJson('fixtures.json') as unknown[]).map((f) => Fixture.parse(f));
-  const candidatesFile = readJson('candidates.original.json') as { candidates: unknown[] };
-  const candidates = candidatesFile.candidates.map((c) => Candidate.parse(c));
-
-  const validation = validateFormalization(original);
-  if (!validation.ok) throw new Error(`golden formalization invalid: ${validation.reasons.join('; ')}`);
 
   const existing = await db.query.projects.findFirst({ where: eq(projects.slug, SLUG) });
   if (existing) {
@@ -105,93 +95,21 @@ async function main() {
 
   await db.insert(purposeContracts).values({
     projectId: project.id,
-    version: purpose.version,
+    version: 1,
     status: 'approved',
     contract: purpose,
     hash: hashOf(purpose),
   });
 
-  const [formalizationRow] = await db
-    .insert(formalizations)
-    .values({
-      projectId: project.id,
-      sourceId: sourceRow.id,
-      version: original.version,
-      status: 'locked',
-      ir: original,
-      irHash: hashOf(original),
-    })
-    .returning();
-
   await db.insert(testFixtures).values(
-    fixturesFile.map((f) => ({
+    purpose.legitimateUses.map((u) => ({
       projectId: project.id,
-      kind: f.kind,
-      label: f.label,
-      pins: f.pins,
-      expect: f.expect,
+      label: u.id,
+      scenario: u.scenario,
     })),
   );
 
-  const inputHash = hashOf({ formalizationId: formalizationRow.id, candidates });
-  const [runRow] = await db
-    .insert(runs)
-    .values({
-      projectId: project.id,
-      type: 'attack',
-      mode: 'demo',
-      status: 'succeeded',
-      inputHash,
-      startedAt: new Date(),
-      finishedAt: new Date(),
-    })
-    .returning();
-
-  const solverVersion = getSolverVersion();
-  let certifiedCount = 0;
-  for (const candidate of candidates) {
-    const result = await certify(original, purpose, candidate);
-    const [candidateRow] = await db
-      .insert(attackCandidates)
-      .values({
-        runId: runRow.id,
-        tactic: candidate.tactic,
-        candidate,
-        status: result.status,
-      })
-      .returning();
-
-    if (result.status === 'certified') {
-      certifiedCount += 1;
-      const certificate = buildCertificate({
-        candidateId: candidateRow.id,
-        formalizationHash: hashOf(original),
-        invariantHash: hashOf(purpose.invariants.find((i) => i.id === candidate.targetInvariantId)),
-        candidateHash: hashOf(candidate),
-        result: result.result,
-        model: result.model ?? null,
-        smtlib: result.smtlib,
-        solverVersion,
-        elapsedMs: result.elapsedMs,
-      });
-      await db.insert(certificates).values({
-        candidateId: candidateRow.id,
-        formalizationId: formalizationRow.id,
-        result: certificate.result,
-        model: certificate.model,
-        smtlib: certificate.smtlib,
-        elapsedMs: Math.round(certificate.elapsedMs),
-        solverVersion: certificate.solverVersion,
-        formalizationHash: certificate.formalizationHash,
-        invariantHash: certificate.invariantHash,
-        candidateHash: certificate.candidateHash,
-        inputHash: certificate.inputHash,
-        hash: certificate.hash,
-      });
-    }
-  }
-
-  console.log(`seeded project '${SLUG}' (${project.id}): ${candidates.length} candidates, ${certifiedCount} certified`);
+  console.log(`seeded project '${SLUG}' (${project.id}): ${sourceFile.spans.length} spans, ${purpose.legitimateUses.length} legitimate uses`);
 }
 
 main()

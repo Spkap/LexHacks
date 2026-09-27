@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { sha256Hex } from '@/core/canonical';
 import { db } from '@/db/client';
-import { auditEvents, formalizations, projects, purposeContracts, sources, sourceSpans, testFixtures } from '@/db/schema';
+import { auditEvents, projects, purposeContracts, sources, sourceSpans, testFixtures } from '@/db/schema';
 import { logAudit } from './audit';
 import { splitIntoSpans } from './paste-split';
 
@@ -20,7 +20,7 @@ export async function getProjectBySlug(slug: string) {
 export const GOLDEN_PROJECT_SLUG = GOLDEN_SLUG;
 
 export async function forkGoldenProject(workspaceId: string): Promise<{ projectId: string; slug: string }> {
-  const [sourceRows, spanRows, purposeRows, formalizationRows, fixtureRows] = await db.batch([
+  const [sourceRows, spanRows, purposeRows, fixtureRows] = await db.batch([
     db.select({ goldenId: projects.id, source: sources })
       .from(sources)
       .innerJoin(projects, eq(sources.projectId, projects.id))
@@ -36,11 +36,6 @@ export async function forkGoldenProject(workspaceId: string): Promise<{ projectI
       .innerJoin(projects, eq(purposeContracts.projectId, projects.id))
       .where(eq(projects.slug, GOLDEN_SLUG))
       .limit(1),
-    db.select({ formalization: formalizations })
-      .from(formalizations)
-      .innerJoin(projects, eq(formalizations.projectId, projects.id))
-      .where(eq(projects.slug, GOLDEN_SLUG))
-      .limit(1),
     db.select({ fixture: testFixtures })
       .from(testFixtures)
       .innerJoin(projects, eq(testFixtures.projectId, projects.id))
@@ -52,7 +47,6 @@ export async function forkGoldenProject(workspaceId: string): Promise<{ projectI
   const { goldenId, source: goldenSource } = goldenSourceRow;
   const goldenSpans = spanRows.map(({ span }) => span);
   const goldenPurpose = purposeRows[0]?.purpose;
-  const goldenFormalization = formalizationRows[0]?.formalization;
   const goldenFixtures = fixtureRows.map(({ fixture }) => fixture);
 
   const projectId = randomUUID();
@@ -100,24 +94,11 @@ export async function forkGoldenProject(workspaceId: string): Promise<{ projectI
         hash: goldenPurpose.hash,
       })]
       : []),
-    ...(goldenFormalization
-      ? [db.insert(formalizations).values({
-        projectId,
-        sourceId,
-        version: goldenFormalization.version,
-        status: goldenFormalization.status,
-        ir: goldenFormalization.ir,
-        irHash: goldenFormalization.irHash,
-        schemaVersion: goldenFormalization.schemaVersion,
-      })]
-      : []),
     ...(goldenFixtures.length > 0
       ? [db.insert(testFixtures).values(goldenFixtures.map((f) => ({
         projectId,
-        kind: f.kind,
         label: f.label,
-        pins: f.pins,
-        expect: f.expect,
+        scenario: f.scenario,
       })))]
       : []),
     db.insert(auditEvents).values({

@@ -1,11 +1,10 @@
-import { randomUUID } from 'node:crypto';
 import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { PurposeContract } from '@/core/contracts';
 import { hashOf } from '@/core/canonical';
-import { PurposeContract } from '@/core/ir';
 import { db } from '@/db/client';
-import { purposeContracts } from '@/db/schema';
+import { purposeContracts, testFixtures } from '@/db/schema';
 import { logAudit } from '@/server/audit';
 import { toHttpError } from '@/server/errors';
 import { requireProjectAccess } from '@/server/workspace';
@@ -13,10 +12,7 @@ import { requireProjectAccess } from '@/server/workspace';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const Body = z.object({
-  contract: PurposeContract.omit({ id: true, version: true }),
-  approved: z.boolean(),
-});
+const Body = z.object({ contract: PurposeContract, approved: z.boolean() });
 
 export async function PUT(request: Request, { params }: { params: Promise<{ projectId: string }> }) {
   try {
@@ -32,18 +28,23 @@ export async function PUT(request: Request, { params }: { params: Promise<{ proj
     });
     const nextVersion = (latest?.version ?? 0) + 1;
 
-    const fullContract = PurposeContract.parse({ id: randomUUID(), version: nextVersion, ...contract });
-
     const [row] = await db
       .insert(purposeContracts)
       .values({
         projectId: project.id,
         version: nextVersion,
         status: approved ? 'approved' : 'proposed',
-        contract: fullContract,
-        hash: hashOf(fullContract),
+        contract,
+        hash: hashOf(contract),
       })
       .returning();
+
+    await db.delete(testFixtures).where(eq(testFixtures.projectId, project.id));
+    if (contract.legitimateUses.length > 0) {
+      await db.insert(testFixtures).values(
+        contract.legitimateUses.map((u) => ({ projectId: project.id, label: u.id, scenario: u.scenario })),
+      );
+    }
 
     await logAudit({
       projectId: project.id,

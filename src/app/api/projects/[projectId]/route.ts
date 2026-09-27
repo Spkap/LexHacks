@@ -1,8 +1,7 @@
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import type { Formalization } from '@/core/ir';
 import { db } from '@/db/client';
-import { attackCandidates, certificates, formalizations, purposeContracts, runs, sources } from '@/db/schema';
+import { attackCandidates, findings, purposeContracts, runs, sources } from '@/db/schema';
 import { toHttpError } from '@/server/errors';
 import { requireProjectAccess } from '@/server/workspace';
 
@@ -24,46 +23,26 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pro
       orderBy: desc(purposeContracts.version),
     });
 
-    const formalization = await db.query.formalizations.findFirst({
-      where: eq(formalizations.projectId, project.id),
-      orderBy: desc(formalizations.version),
-    });
-
-    const ruleCounts = { approved: 0, disputed: 0, proposed: 0, total: 0 };
-    const definitionCounts = { approved: 0, disputed: 0, proposed: 0, total: 0 };
-    if (formalization) {
-      const ir = formalization.ir as Formalization;
-      for (const r of ir.rules) {
-        ruleCounts[r.status] += 1;
-        ruleCounts.total += 1;
-      }
-      for (const d of ir.definitions) {
-        definitionCounts[d.status] += 1;
-        definitionCounts.total += 1;
-      }
-    }
-
-    const certificateRows = await db
-      .select({ id: certificates.id, result: certificates.result, hash: certificates.hash })
-      .from(certificates)
-      .innerJoin(attackCandidates, eq(certificates.candidateId, attackCandidates.id))
-      .innerJoin(runs, eq(attackCandidates.runId, runs.id))
-      .where(eq(runs.projectId, project.id));
-
     const lastRuns = await db.query.runs.findMany({
       where: eq(runs.projectId, project.id),
       orderBy: desc(runs.startedAt),
       limit: 5,
     });
 
+    const runIds = lastRuns.map((r) => r.id);
+    const findingCounts = { confirmed: 0, blocked: 0, harmless: 0, contested: 0 };
+    if (runIds.length > 0) {
+      const rows = await db.query.attackCandidates.findMany({ where: inArray(attackCandidates.runId, runIds) });
+      const candidateIds = rows.map((r) => r.id);
+      const findingRows = candidateIds.length > 0 ? await db.query.findings.findMany({ where: inArray(findings.candidateId, candidateIds) }) : [];
+      for (const f of findingRows) findingCounts[f.verdict] += 1;
+    }
+
     return NextResponse.json({
       project: { id: project.id, slug: project.slug, name: project.name, isPublic: project.isPublic },
       source: source ? { id: source.id, sha256: source.sha256, title: source.title, canonicalUrl: source.canonicalUrl } : null,
-      purpose: purpose ? { id: purpose.id, version: purpose.version, status: purpose.status } : null,
-      formalization: formalization
-        ? { id: formalization.id, version: formalization.version, status: formalization.status, ruleCounts, definitionCounts }
-        : null,
-      certificates: certificateRows,
+      purpose: purpose ? { id: purpose.id, version: purpose.version, status: purpose.status, contract: purpose.contract } : null,
+      findingCounts,
       lastRuns,
     });
   } catch (error) {

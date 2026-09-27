@@ -3,7 +3,7 @@ import { after } from 'next/server';
 import { db } from '@/db/client';
 import { runEvents, runs } from '@/db/schema';
 
-export type RunType = 'compile' | 'attack' | 'repair' | 'retest';
+export type RunType = 'attack' | 'repair' | 'retest';
 export type RunMode = 'demo' | 'live';
 export type Emit = (stage: string, payload: unknown) => Promise<void>;
 

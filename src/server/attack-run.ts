@@ -1,167 +1,138 @@
-import { hashOf } from '@/core/canonical';
-import { buildCertificate } from '@/core/certificate';
-import { certify, enumerateCounterexamples, pick, type SolveStatus } from '@/core/engine';
-import { validateCandidate, type Candidate, type Formalization, type PurposeContract, type Tactic } from '@/core/ir';
-import { getSolverVersion } from '@/core/z3';
-import { generateAttackBatch } from '@/ai/attack';
-import { explainCertificate } from '@/ai/explain';
+import { eq } from 'drizzle-orm';
+import { generateAttack } from '@/ai/attack';
+import { judgeScheme } from '@/ai/defense';
+import { LANES, type AttackProposal, type CandidateStatus, type DefenseVote, type Lane, type PurposeContract, type Span } from '@/core/contracts';
+import { findingHash } from '@/core/finding';
+import { groundProposal, groundVote } from '@/core/grounding';
+import { decideVerdict } from '@/core/verdict';
 import { db } from '@/db/client';
-import { attackCandidates, certificates } from '@/db/schema';
+import { attackCandidates, findings } from '@/db/schema';
 import type { Emit } from './runs';
 
+export interface DemoCandidate {
+  label: string;
+  proposal: AttackProposal;
+}
+
 export interface AttackRunInput {
-  formalizationId: string;
-  formalization: Formalization;
+  sourceId: string;
+  sourceSha: string;
+  purposeHash: string;
+  spans: Span[];
   purpose: PurposeContract;
-  tactics: Tactic[];
-  budgetPerTactic: number;
-  solverSearch: boolean;
+  k: number;
   mode: 'demo' | 'live';
-  demoRecordedCandidates?: Candidate[];
+  demoCandidates?: DemoCandidate[];
+  demoVotes?: Record<string, DefenseVote[]>;
   runId?: string;
 }
 
 export interface AttackRunSummary {
-  generated: number;
-  invalid: number;
-  rejected: number;
-  inconclusive: number;
-  certified: number;
+  schemes: number;
+  ungrounded: number;
+  blocked: number;
+  harmless: number;
+  contested: number;
+  confirmed: number;
 }
 
-const DEMO_STAGE_DELAY_MS = 250;
-const SOLVER_SEARCH_LIMIT = 5;
+const DEMO_VOTE_DELAY_MS = 250;
 
 async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function spansById(spans: Span[]): Map<string, Span> {
+  return new Map(spans.map((s) => [s.id, s]));
+}
+
 export async function runAttackPipeline(input: AttackRunInput, emit: Emit): Promise<AttackRunSummary> {
-  const seenFamilies = new Set<string>();
-  const summary: AttackRunSummary = { generated: 0, invalid: 0, rejected: 0, inconclusive: 0, certified: 0 };
-  const solverVersion = getSolverVersion();
+  const summary: AttackRunSummary = { schemes: 0, ungrounded: 0, blocked: 0, harmless: 0, contested: 0, confirmed: 0 };
+  const byId = spansById(input.spans);
 
-  async function processCandidate(candidate: Candidate): Promise<void> {
-    summary.generated += 1;
-    await emit('generated', { candidate });
-
-    const validation = validateCandidate(input.formalization, candidate);
-    if (!validation.ok) {
-      summary.invalid += 1;
-      await emit('invalid', { candidateId: candidate.id, reasons: validation.reasons });
-      if (input.runId) {
-        await db.insert(attackCandidates).values({ runId: input.runId, tactic: candidate.tactic, candidate, status: 'invalid', reasons: validation.reasons });
-      }
-      return;
-    }
-
-    const familyKey = hashOf(pick(candidate.pins, candidate.familyKeys));
-    if (seenFamilies.has(familyKey)) {
-      await emit('deduped', { candidateId: candidate.id });
-      return;
-    }
-    seenFamilies.add(familyKey);
-
-    await emit('solving', { candidateId: candidate.id });
-    const result = await certify(input.formalization, input.purpose, candidate);
-
-    const statusCounts: Record<'certified' | 'rejected' | 'inconclusive', keyof AttackRunSummary> = {
-      certified: 'certified',
-      rejected: 'rejected',
-      inconclusive: 'inconclusive',
-    };
-    summary[statusCounts[result.status]] += 1;
-
-    let candidateRowId: string | undefined;
+  async function processProposal(proposal: AttackProposal, label: string | undefined, recordedVotes?: DefenseVote[]): Promise<void> {
+    summary.schemes += 1;
+    const candidateId = crypto.randomUUID();
     if (input.runId) {
-      const [row] = await db
-        .insert(attackCandidates)
-        .values({ runId: input.runId, tactic: candidate.tactic, candidate, status: result.status })
-        .returning();
-      candidateRowId = row.id;
-    }
-
-    if (result.status === 'certified' && candidateRowId && result.model) {
-      const invariant = input.purpose.invariants.find((i) => i.id === candidate.targetInvariantId);
-      if (!invariant) throw new Error(`certified candidate '${candidate.id}' cites unknown invariant '${candidate.targetInvariantId}'`);
-
-      const certificate = buildCertificate({
-        candidateId: candidateRowId,
-        formalizationHash: hashOf(input.formalization),
-        invariantHash: hashOf(invariant),
-        candidateHash: hashOf(candidate),
-        result: result.result as SolveStatus,
-        model: result.model,
-        smtlib: result.smtlib,
-        solverVersion,
-        elapsedMs: result.elapsedMs,
+      await db.insert(attackCandidates).values({
+        id: candidateId,
+        runId: input.runId,
+        tactic: proposal.tactic,
+        candidate: proposal,
+        status: 'generated',
+        label,
+        sourceId: input.sourceId,
       });
+    }
+    await emit('candidate.proposed', { stage: 'candidate.proposed', candidateId, label, proposal });
 
-      const explanation = await explainCertificate(input.formalization, result.model, invariant, { runId: input.runId, mode: input.mode });
+    const grounding = groundProposal(proposal, input.spans);
+    if (!grounding.ok) {
+      summary.ungrounded += 1;
+      if (input.runId) {
+        await db.update(attackCandidates).set({ status: 'ungrounded', reasons: grounding.reasons }).where(eq(attackCandidates.id, candidateId));
+      }
+      await emit('candidate.ungrounded', { stage: 'candidate.ungrounded', candidateId, reasons: grounding.reasons });
+      return;
+    }
 
-      const [certRow] = await db
-        .insert(certificates)
-        .values({
-          candidateId: candidateRowId,
-          formalizationId: input.formalizationId,
-          result: certificate.result,
-          model: certificate.model,
-          smtlib: certificate.smtlib,
-          elapsedMs: Math.round(certificate.elapsedMs),
-          solverVersion: certificate.solverVersion,
-          formalizationHash: certificate.formalizationHash,
-          invariantHash: certificate.invariantHash,
-          candidateHash: certificate.candidateHash,
-          inputHash: certificate.inputHash,
-          hash: certificate.hash,
-          explanation,
-        })
-        .returning();
-      await emit('certified', { candidateId: candidate.id, certificateId: certRow.id, model: result.model, explanation });
+    const spanIds = [...new Set(proposal.quotes.map((q) => q.spanId))];
+    await emit('candidate.grounded', { stage: 'candidate.grounded', candidateId, spanIds });
+
+    const citedSpans = spanIds.map((id) => byId.get(id)).filter((s): s is Span => Boolean(s));
+
+    let votes: DefenseVote[];
+    if (recordedVotes) {
+      votes = recordedVotes.map((v) => groundVote(v, citedSpans));
+      for (const vote of votes) {
+        await emit('jury.vote', { stage: 'jury.vote', candidateId, vote });
+        await sleep(DEMO_VOTE_DELAY_MS);
+      }
     } else {
-      await emit(result.status, { candidateId: candidate.id, reasons: [] });
-    }
-  }
-
-  if (input.mode === 'demo' && input.demoRecordedCandidates) {
-    for (const candidate of input.demoRecordedCandidates) {
-      await processCandidate(candidate);
-      await sleep(DEMO_STAGE_DELAY_MS);
-    }
-  } else {
-    for (const tactic of input.tactics) {
-      const batch = await generateAttackBatch({
-        formalization: input.formalization,
-        purpose: input.purpose,
-        tactic,
-        budget: input.budgetPerTactic,
+      const rawVotes = await judgeScheme({
         runId: input.runId,
         mode: input.mode,
+        scenario: proposal.scenario,
+        spans: citedSpans,
+        purpose: input.purpose,
       });
-      for (const candidate of batch) await processCandidate(candidate);
-    }
-  }
-
-  if (input.solverSearch) {
-    const allVarNames = input.formalization.vars.map((v) => v.name);
-    for (const invariant of input.purpose.invariants) {
-      const models = await enumerateCounterexamples(input.formalization, input.purpose, invariant.id, allVarNames, SOLVER_SEARCH_LIMIT);
-      for (let i = 0; i < models.length; i += 1) {
-        const model = models[i];
-        const tactic: Tactic = model.consideration === 'none' ? 'no_consideration' : 'solver_found';
-        const candidate: Candidate = {
-          id: `solver-${invariant.id}-${i + 1}`,
-          tactic,
-          narrative: 'Found directly by the solver, without any AI narrative.',
-          pins: model,
-          familyKeys: allVarNames,
-          citedRuleIds: [],
-          targetInvariantId: invariant.id,
-        };
-        await processCandidate(candidate);
+      votes = rawVotes.map((v) => groundVote(v, citedSpans));
+      for (const vote of votes) {
+        await emit('jury.vote', { stage: 'jury.vote', candidateId, vote });
       }
     }
+
+    const verdict = decideVerdict(votes);
+    summary[verdict] += 1;
+
+    let findingId: string | undefined;
+    if (input.runId) {
+      const hash = findingHash({ sourceSha: input.sourceSha, purposeHash: input.purposeHash, proposal, votes });
+      const [row] = await db
+        .insert(findings)
+        .values({ candidateId, sourceId: input.sourceId, proposal, votes, verdict, hash })
+        .returning();
+      findingId = row.id;
+      await db.update(attackCandidates).set({ status: verdict }).where(eq(attackCandidates.id, candidateId));
+    }
+
+    const status: CandidateStatus = verdict;
+    await emit('candidate.verdict', { stage: 'candidate.verdict', candidateId, findingId: findingId ?? '', status });
   }
 
+  if (input.mode === 'demo' && input.demoCandidates) {
+    for (const { label, proposal } of input.demoCandidates) {
+      await processProposal(proposal, label, input.demoVotes?.[label]);
+    }
+  } else {
+    await Promise.all(
+      LANES.map(async (lane: Lane) => {
+        const proposals = await generateAttack({ runId: input.runId, mode: input.mode, spans: input.spans, purpose: input.purpose, lane, k: input.k });
+        for (const proposal of proposals) await processProposal(proposal, undefined);
+      }),
+    );
+  }
+
+  await emit('run.summary', { stage: 'run.summary', counts: summary as unknown as Record<string, number> });
   return summary;
 }

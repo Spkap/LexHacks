@@ -3,12 +3,12 @@ import { join } from 'node:path';
 import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { runAttackPipeline, type DemoCandidate } from '@/server/attack-run';
+import { AttackProposal, DefenseVote, type PurposeContract } from '@/core/contracts';
 import { hashOf } from '@/core/canonical';
-import { Candidate, Tactic, type Formalization, type PurposeContract } from '@/core/ir';
-import { db } from '@/db/client';
-import { formalizations, purposeContracts } from '@/db/schema';
-import { runAttackPipeline } from '@/server/attack-run';
 import { GateError } from '@/core/engine';
+import { db } from '@/db/client';
+import { purposeContracts, sourceSpans, sources } from '@/db/schema';
 import { NotFoundError, RateLimitError, toHttpError } from '@/server/errors';
 import { rateLimit } from '@/server/rate-limit';
 import { runExecutor, type Emit } from '@/server/runs';
@@ -18,26 +18,21 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-// Global run budget: at most 40 candidates per run (tactic-generated plus solver-native
-// search, which contributes up to SOLVER_SEARCH_LIMIT=5 per invariant in attack-run.ts).
-const MAX_CANDIDATES = 40;
-const SOLVER_SEARCH_BUDGET = 5;
+const K_PER_LANE = 2;
 
-const Body = z
-  .object({
-    mode: z.enum(['demo', 'live']).default('live'),
-    tactics: z.array(Tactic).min(1).max(9),
-    budgetPerTactic: z.number().int().min(1).max(4),
-    solverSearch: z.boolean().default(false),
-  })
-  .refine((b) => b.tactics.length * b.budgetPerTactic + (b.solverSearch ? SOLVER_SEARCH_BUDGET : 0) <= MAX_CANDIDATES, {
-    message: `tactics.length * budgetPerTactic (plus ${SOLVER_SEARCH_BUDGET} if solverSearch) must not exceed ${MAX_CANDIDATES}`,
-  });
+const Body = z.object({ mode: z.enum(['demo', 'live']).default('live') });
 
-function loadDemoCandidates(): Candidate[] {
-  const path = join(process.cwd(), 'fixtures', 'golden', 'ccpa-2018', 'candidates.original.json');
-  const file = JSON.parse(readFileSync(path, 'utf8')) as { candidates: unknown[] };
-  return file.candidates.map((c) => Candidate.parse(c));
+const GoldenCandidate = z.object({ label: z.string(), proposal: AttackProposal });
+const GoldenCandidates = z.object({ candidates: z.array(GoldenCandidate) });
+const GoldenJury = z.record(z.string(), z.array(DefenseVote));
+
+function loadDemoFixtures(): { demoCandidates: DemoCandidate[]; demoVotes: Record<string, DefenseVote[]> } {
+  const dir = join(process.cwd(), 'fixtures', 'golden', 'ccpa-2018');
+  const candidatesFile = JSON.parse(readFileSync(join(dir, 'candidates.original.json'), 'utf8'));
+  const juryFile = JSON.parse(readFileSync(join(dir, 'jury.recorded.json'), 'utf8'));
+  const demoCandidates = GoldenCandidates.parse(candidatesFile).candidates;
+  const demoVotes = GoldenJury.parse(juryFile.votes ?? {});
+  return { demoCandidates, demoVotes };
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ projectId: string }> }) {
@@ -48,17 +43,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
     const limit = rateLimit(`attack-run:${workspaceId ?? projectId}`, 20, 3600);
     if (!limit.ok) throw new RateLimitError('too many attack runs this hour');
 
-    const json = await request.json();
+    const json = await request.json().catch(() => ({}));
     const body = Body.parse(json);
 
-    const formalizationRow = await db.query.formalizations.findFirst({
-      where: eq(formalizations.projectId, project.id),
-      orderBy: desc(formalizations.version),
-    });
-    if (!formalizationRow) throw new NotFoundError('project has no formalization to attack');
-    if (formalizationRow.status !== 'locked') {
-      throw new GateError('FORMALIZATION_NOT_APPROVED', ['formalization must be locked before attacking it']);
-    }
+    const source = await db.query.sources.findFirst({ where: eq(sources.projectId, project.id), orderBy: desc(sources.createdAt) });
+    if (!source) throw new NotFoundError('project has no source to attack');
 
     const purposeRow = await db.query.purposeContracts.findFirst({
       where: eq(purposeContracts.projectId, project.id),
@@ -67,39 +56,33 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
     if (!purposeRow || purposeRow.status !== 'approved') {
       throw new GateError('PURPOSE_NOT_APPROVED', ['purpose contract must be approved before attacking']);
     }
-
-    const formalization = formalizationRow.ir as Formalization;
     const purpose = purposeRow.contract as PurposeContract;
 
-    const inputHash = hashOf({
-      formalizationId: formalizationRow.id,
-      purposeId: purposeRow.id,
-      tactics: [...body.tactics].sort(),
-      budgetPerTactic: body.budgetPerTactic,
-      solverSearch: body.solverSearch,
-      mode: body.mode,
-    });
+    const spans = await db.query.sourceSpans.findMany({ where: eq(sourceSpans.sourceId, source.id) });
 
-    const demoRecordedCandidates = body.mode === 'demo' && project.demoTemplate === 'ccpa-2018' ? loadDemoCandidates() : undefined;
+    const inputHash = hashOf({ sourceId: source.id, purposeId: purposeRow.id, mode: body.mode });
+
+    const useDemoFixtures = body.mode === 'demo' && project.demoTemplate === 'ccpa-2018';
+    const { demoCandidates, demoVotes } = useDemoFixtures ? loadDemoFixtures() : { demoCandidates: undefined, demoVotes: undefined };
 
     const { runId, reused } = await runExecutor.start(
       { projectId: project.id, type: 'attack', mode: body.mode, inputHash },
       async (emit: Emit, runId: string) => {
-        const summary = await runAttackPipeline(
+        return runAttackPipeline(
           {
-            formalizationId: formalizationRow.id,
-            formalization,
+            sourceId: source.id,
+            sourceSha: source.sha256,
+            purposeHash: purposeRow.hash,
+            spans,
             purpose,
-            tactics: body.tactics,
-            budgetPerTactic: body.budgetPerTactic,
-            solverSearch: body.solverSearch,
+            k: K_PER_LANE,
             mode: body.mode,
-            demoRecordedCandidates,
+            demoCandidates,
+            demoVotes,
             runId,
           },
           emit,
         );
-        return summary;
       },
     );
 

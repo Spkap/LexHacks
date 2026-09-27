@@ -1,19 +1,13 @@
 {
-  "id": "PC-001",
-  "version": 1,
   "sentence": {
-    "protectedClass": "covered businesses",
-    "preventOutcome": "disclosure of an opted-out consumer's personal information to third parties for cross-context advertising",
-    "without": "consumer consent",
+    "protectedClass": "consumers who opt out of the sale of their personal information",
+    "preventOutcome": "their personal information still reaching a third party for cross-context behavioral advertising",
+    "without": "the consumer's consent",
     "evenWhen": "no money changes hands"
   },
-  "invariants": [
-    {
-      "id": "P1",
-      "statement": "An opted-out consumer's personal information must never reach a third party for cross-context behavioral advertising, whether or not the business is paid for it.",
-      "holds": "not(and(covered_business, consumer_opted_out, third_party_disclosure, is(disclosure_purpose, cross_context_ads)))",
-      "severity": "high",
-      "approved": true
-    }
+  "legitimateUses": [
+    { "id": "G1", "scenario": "An opted-out consumer's data goes to a service provider under a written contract, only to process the business's payments, and the business pays the provider for that service." },
+    { "id": "G2", "scenario": "The consumer asks the business to send her data to a specific company she chose, and the business does so." },
+    { "id": "G3", "scenario": "Before the consumer opts out, the business sells her data to a third party for money and shows a 'Do Not Sell My Personal Information' link on its homepage." }
   ]
 }

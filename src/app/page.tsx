@@ -16,7 +16,7 @@ async function getPublicProjects() {
       const runIds = projectRuns.map((r) => r.id);
       const candidates = runIds.length > 0 ? await db.query.attackCandidates.findMany() : [];
       const relevant = candidates.filter((c) => runIds.includes(c.runId));
-      const certifiedCount = relevant.filter((c) => c.status === "certified").length;
+      const certifiedCount = relevant.filter((c) => c.status === "confirmed").length;
       return { project, ruleCount: relevant.length, certifiedCount };
     }),
   );

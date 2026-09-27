@@ -29,6 +29,20 @@
       "when": 1790520391768,
       "tag": "0003_useful_wendell_rand",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790532665182,
+      "tag": "0004_v2_additive",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790532707746,
+      "tag": "0005_v2_drop_v1",
+      "breakpoints": true
     }
   ]
 }

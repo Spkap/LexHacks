@@ -1,12 +1,13 @@
-import { eq } from 'drizzle-orm';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { hashOf } from '@/core/canonical';
-import { retest } from '@/core/engine';
-import { Candidate, Tactic, type Formalization, type PurposeContract } from '@/core/ir';
+import type { PurposeContract, Span } from '@/core/contracts';
 import { db } from '@/db/client';
-import { attackCandidates, certificates, formalizations, purposeContracts, repairs, testFixtures } from '@/db/schema';
-import { runAttackPipeline } from '@/server/attack-run';
+import { purposeContracts, repairs, sourceSpans, sources } from '@/db/schema';
+import { runRetestPipeline, type RetestSummary } from '@/server/retest-run';
 import { NotFoundError, RateLimitError, toHttpError } from '@/server/errors';
 import { rateLimit } from '@/server/rate-limit';
 import { runExecutor, type Emit } from '@/server/runs';
@@ -16,7 +17,23 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-const Body = z.object({ freshAttackTactics: z.array(Tactic).max(9).default([]) });
+const Body = z.object({ mode: z.enum(['demo', 'live']).default('live') });
+
+const RetestFile = z.object({
+  placeholder: z.boolean().default(false),
+  result: z.object({
+    pass: z.boolean(),
+    loopholesBefore: z.number(),
+    loopholesAfter: z.number(),
+    legitKept: z.number(),
+    legitTotal: z.number(),
+  }),
+});
+
+function loadDemoRetest(): RetestSummary {
+  const path = join(process.cwd(), 'fixtures', 'golden', 'ccpa-2018', 'reattack.recorded.json');
+  return RetestFile.parse(JSON.parse(readFileSync(path, 'utf8'))).result;
+}
 
 export async function POST(request: Request, { params }: { params: Promise<{ repairId: string }> }) {
   try {
@@ -25,14 +42,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ rep
 
     const repairRow = await db.query.repairs.findFirst({ where: eq(repairs.id, repairId) });
     if (!repairRow) throw new NotFoundError(`repair '${repairId}' not found`);
-    if (repairRow.status !== 'approved' || !repairRow.repairedFormalizationId) {
+    if (repairRow.status !== 'approved' || !repairRow.repairedSourceId) {
       return NextResponse.json({ error: 'invalid_state', message: 'repair must be approved before retesting' }, { status: 409 });
     }
 
-    const repairedFormalizationRow = await db.query.formalizations.findFirst({ where: eq(formalizations.id, repairRow.repairedFormalizationId) });
-    if (!repairedFormalizationRow) throw new NotFoundError('repair references a missing repaired formalization');
+    const patchedSource = await db.query.sources.findFirst({ where: eq(sources.id, repairRow.repairedSourceId) });
+    if (!patchedSource) throw new NotFoundError('repair references a missing repaired source');
 
-    const { project, workspaceId } = await requireProjectAccess(repairedFormalizationRow.projectId, 'write');
+    const { project, workspaceId } = await requireProjectAccess(patchedSource.projectId, 'write');
 
     const limit = rateLimit(`retest-run:${workspaceId ?? project.id}`, 20, 3600);
     if (!limit.ok) throw new RateLimitError('too many retest runs this hour');
@@ -40,49 +57,36 @@ export async function POST(request: Request, { params }: { params: Promise<{ rep
     const json = await request.json().catch(() => ({}));
     const body = Body.parse(json);
 
-    const baseFormalizationRow = await db.query.formalizations.findFirst({ where: eq(formalizations.id, repairRow.baseFormalizationId) });
-    if (!baseFormalizationRow) throw new NotFoundError('repair references a missing base formalization');
-
-    const purposeRow = await db.query.purposeContracts.findFirst({ where: eq(purposeContracts.projectId, project.id) });
+    const purposeRow = await db.query.purposeContracts.findFirst({
+      where: eq(purposeContracts.projectId, project.id),
+      orderBy: desc(purposeContracts.version),
+    });
     if (!purposeRow) throw new NotFoundError('project has no purpose contract');
-    const purpose = purposeRow.contract as PurposeContract;
 
-    const fixtureRows = await db.query.testFixtures.findMany({ where: eq(testFixtures.projectId, project.id) });
-    const fixtures = fixtureRows.map((f) => ({ id: f.id, kind: f.kind, label: f.label, pins: f.pins as Record<string, boolean | number | string>, expect: f.expect }));
+    const patchedSpans: Span[] = await db.query.sourceSpans.findMany({ where: eq(sourceSpans.sourceId, patchedSource.id) });
 
-    const baseCerts = await db.query.certificates.findMany({ where: eq(certificates.formalizationId, baseFormalizationRow.id) });
-    const certifiedCandidateRows = await Promise.all(
-      baseCerts.map((c) => db.query.attackCandidates.findFirst({ where: eq(attackCandidates.id, c.candidateId) })),
-    );
-    const certifiedCandidates = certifiedCandidateRows.filter((c): c is NonNullable<typeof c> => Boolean(c)).map((c) => Candidate.parse(c.candidate));
+    const inputHash = hashOf({ repairId });
 
-    const inputHash = hashOf({ repairId, freshAttackTactics: [...body.freshAttackTactics].sort() });
+    const useDemoFixtures = body.mode === 'demo' && project.demoTemplate === 'ccpa-2018';
+    const demoResult = useDemoFixtures ? loadDemoRetest() : undefined;
 
     const { runId, reused } = await runExecutor.start(
-      { projectId: project.id, type: 'retest', mode: 'live', inputHash },
+      { projectId: project.id, type: 'retest', mode: body.mode, inputHash },
       async (emit: Emit, runId: string) => {
-        const repairedIr = repairedFormalizationRow.ir as Formalization;
-        const retestReport = await retest(repairedIr, purpose, certifiedCandidates, fixtures);
-        await emit('retested', retestReport);
-
-        let freshAttackSummary = null;
-        if (body.freshAttackTactics.length > 0) {
-          freshAttackSummary = await runAttackPipeline(
-            {
-              formalizationId: repairedFormalizationRow.id,
-              formalization: repairedIr,
-              purpose,
-              tactics: body.freshAttackTactics,
-              budgetPerTactic: 2,
-              solverSearch: true,
-              mode: 'live',
-              runId,
-            },
-            emit,
-          );
-        }
-
-        return { retestReport, freshAttackSummary };
+        return runRetestPipeline(
+          {
+            baseSourceId: repairRow.baseSourceId,
+            patchedSourceId: patchedSource.id,
+            patchedSpans,
+            purpose: purposeRow.contract as PurposeContract,
+            purposeHash: purposeRow.hash,
+            patchedSourceSha: patchedSource.sha256,
+            mode: body.mode,
+            runId,
+            demoResult,
+          },
+          emit,
+        );
       },
     );
 

@@ -1,0 +1,11 @@
+{
+  "placeholder": true,
+  "recordedFrom": null,
+  "result": {
+    "pass": false,
+    "loopholesBefore": 0,
+    "loopholesAfter": 0,
+    "legitKept": 0,
+    "legitTotal": 3
+  }
+}

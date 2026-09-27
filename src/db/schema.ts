@@ -21,6 +21,7 @@ export const projects = pgTable('projects', {
 export const sources = pgTable('sources', {
   id: uuid('id').primaryKey().defaultRandom(),
   projectId: uuid('project_id').notNull().references(() => projects.id),
+  parentSourceId: uuid('parent_source_id'),
   title: text('title').notNull(),
   jurisdiction: text('jurisdiction').notNull(),
   canonicalUrl: text('canonical_url').notNull(),
@@ -55,32 +56,17 @@ export const purposeContracts = pgTable('purpose_contracts', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [unique('purpose_contracts_project_version_key').on(t.projectId, t.version)]);
 
-export const formalizations = pgTable('formalizations', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  projectId: uuid('project_id').notNull().references(() => projects.id),
-  sourceId: uuid('source_id').notNull().references(() => sources.id),
-  version: integer('version').notNull(),
-  parentId: uuid('parent_id'),
-  status: text('status', { enum: ['draft', 'locked'] }).notNull().default('draft'),
-  ir: jsonb('ir').notNull(),
-  irHash: text('ir_hash').notNull(),
-  schemaVersion: integer('schema_version').notNull().default(1),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [unique('formalizations_project_version_key').on(t.projectId, t.version)]);
-
 export const testFixtures = pgTable('test_fixtures', {
   id: uuid('id').primaryKey().defaultRandom(),
   projectId: uuid('project_id').notNull().references(() => projects.id),
-  kind: text('kind', { enum: ['legitimate', 'exploit'] }).notNull(),
   label: text('label').notNull(),
-  pins: jsonb('pins').notNull(),
-  expect: text('expect', { enum: ['sat', 'unsat'] }).notNull(),
+  scenario: text('scenario').notNull(),
 }, (t) => [index('test_fixtures_project_id_idx').on(t.projectId)]);
 
 export const runs = pgTable('runs', {
   id: uuid('id').primaryKey().defaultRandom(),
   projectId: uuid('project_id').notNull().references(() => projects.id),
-  type: text('type', { enum: ['compile', 'attack', 'repair', 'retest'] }).notNull(),
+  type: text('type', { enum: ['attack', 'repair', 'retest'] }).notNull(),
   mode: text('mode', { enum: ['demo', 'live'] }).notNull(),
   status: text('status', { enum: ['queued', 'running', 'succeeded', 'failed'] }).notNull().default('queued'),
   inputHash: text('input_hash').notNull(),
@@ -104,34 +90,37 @@ export const attackCandidates = pgTable('attack_candidates', {
   runId: uuid('run_id').notNull().references(() => runs.id),
   tactic: text('tactic').notNull(),
   candidate: jsonb('candidate').notNull(),
-  status: text('status', { enum: ['generated', 'invalid', 'rejected', 'inconclusive', 'certified'] }).notNull().default('generated'),
+  status: text('status', { enum: ['generated', 'ungrounded', 'blocked', 'harmless', 'contested', 'confirmed'] }).notNull().default('generated'),
   reasons: jsonb('reasons'),
+  label: text('label'),
+  sourceId: uuid('source_id').references(() => sources.id),
 }, (t) => [index('attack_candidates_run_id_idx').on(t.runId), index('attack_candidates_status_idx').on(t.status)]);
 
-export const certificates = pgTable('certificates', {
+export const findings = pgTable('findings', {
   id: uuid('id').primaryKey().defaultRandom(),
   candidateId: uuid('candidate_id').notNull().references(() => attackCandidates.id),
-  formalizationId: uuid('formalization_id').notNull().references(() => formalizations.id),
-  result: text('result', { enum: ['sat', 'unsat', 'unknown'] }).notNull(),
-  model: jsonb('model'),
-  smtlib: text('smtlib').notNull(),
-  elapsedMs: integer('elapsed_ms').notNull(),
-  solverVersion: text('solver_version').notNull(),
-  // The three inputs verifyCertificate() needs to recompute inputHash/hash from scratch,
-  // so a certificate can be re-verified from its own row with no other lookups.
-  formalizationHash: text('formalization_hash').notNull(),
-  invariantHash: text('invariant_hash').notNull(),
-  candidateHash: text('candidate_hash').notNull(),
-  inputHash: text('input_hash').notNull(),
+  sourceId: uuid('source_id').notNull().references(() => sources.id),
+  proposal: jsonb('proposal').notNull(),
+  votes: jsonb('votes').notNull(),
+  verdict: text('verdict', { enum: ['confirmed', 'blocked', 'harmless', 'contested'] }).notNull(),
   hash: text('hash').notNull(),
-  explanation: jsonb('explanation'),
-}, (t) => [unique('certificates_candidate_id_key').on(t.candidateId)]);
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [unique('findings_candidate_id_key').on(t.candidateId), index('findings_source_id_idx').on(t.sourceId)]);
+
+export const findingRulings = pgTable('finding_rulings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  findingId: uuid('finding_id').notNull().references(() => findings.id),
+  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id),
+  ruling: text('ruling', { enum: ['loophole', 'no_loophole'] }).notNull(),
+  note: text('note'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index('finding_rulings_finding_id_idx').on(t.findingId)]);
 
 export const repairs = pgTable('repairs', {
   id: uuid('id').primaryKey().defaultRandom(),
-  certificateId: uuid('certificate_id').notNull().references(() => certificates.id),
-  baseFormalizationId: uuid('base_formalization_id').notNull().references(() => formalizations.id),
-  repairedFormalizationId: uuid('repaired_formalization_id'),
+  findingId: uuid('finding_id').notNull().references(() => findings.id),
+  baseSourceId: uuid('base_source_id').notNull().references(() => sources.id),
+  repairedSourceId: uuid('repaired_source_id'),
   redline: jsonb('redline').notNull(),
   status: text('status', { enum: ['proposed', 'approved', 'rejected'] }).notNull().default('proposed'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

@@ -1,10 +1,13 @@
-import { eq } from 'drizzle-orm';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { hashOf } from '@/core/canonical';
-import { Candidate, type Formalization, type PurposeContract } from '@/core/ir';
+import { AttackProposal, RepairProposal, type PurposeContract } from '@/core/contracts';
+import { isLoophole } from '@/core/verdict';
 import { db } from '@/db/client';
-import { attackCandidates, certificates, formalizations, purposeContracts, testFixtures } from '@/db/schema';
+import { findings, purposeContracts, sourceSpans } from '@/db/schema';
 import { runRepairPipeline } from '@/server/repair-run';
 import { NotFoundError, RateLimitError, toHttpError } from '@/server/errors';
 import { rateLimit } from '@/server/rate-limit';
@@ -15,7 +18,14 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-const Body = z.object({ certificateId: z.string().uuid(), mode: z.enum(['demo', 'live']).default('live') });
+const Body = z.object({ findingId: z.string().uuid(), mode: z.enum(['demo', 'live']).default('live') });
+
+const RepairFile = z.object({ proposals: z.array(RepairProposal) });
+
+function loadDemoRepairProposals(): RepairProposal[] {
+  const path = join(process.cwd(), 'fixtures', 'golden', 'ccpa-2018', 'repair.recorded.json');
+  return RepairFile.parse(JSON.parse(readFileSync(path, 'utf8'))).proposals;
+}
 
 export async function POST(request: Request, { params }: { params: Promise<{ projectId: string }> }) {
   try {
@@ -28,45 +38,41 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
     const json = await request.json();
     const body = Body.parse(json);
 
-    const certificateRow = await db.query.certificates.findFirst({ where: eq(certificates.id, body.certificateId) });
-    if (!certificateRow) throw new NotFoundError(`certificate '${body.certificateId}' not found`);
+    const findingRow = await db.query.findings.findFirst({ where: eq(findings.id, body.findingId) });
+    if (!findingRow) throw new NotFoundError(`finding '${body.findingId}' not found`);
 
-    const candidateRow = await db.query.attackCandidates.findFirst({ where: eq(attackCandidates.id, certificateRow.candidateId) });
-    if (!candidateRow) throw new NotFoundError('certificate references a missing candidate');
-    const exploitCandidate = Candidate.parse(candidateRow.candidate);
+    const spans = await db.query.sourceSpans.findMany({ where: eq(sourceSpans.sourceId, findingRow.sourceId) });
 
-    const baseFormalizationRow = await db.query.formalizations.findFirst({ where: eq(formalizations.id, certificateRow.formalizationId) });
-    if (!baseFormalizationRow) throw new NotFoundError('certificate references a missing formalization');
-    if (baseFormalizationRow.projectId !== project.id) throw new NotFoundError('certificate does not belong to this project');
-
-    const purposeRow = await db.query.purposeContracts.findFirst({ where: eq(purposeContracts.projectId, project.id) });
+    const purposeRow = await db.query.purposeContracts.findFirst({
+      where: eq(purposeContracts.projectId, project.id),
+      orderBy: desc(purposeContracts.version),
+    });
     if (!purposeRow) throw new NotFoundError('project has no purpose contract');
 
-    const fixtureRows = await db.query.testFixtures.findMany({ where: eq(testFixtures.projectId, project.id) });
-    const fixtures = fixtureRows.map((f) => ({ id: f.id, kind: f.kind, label: f.label, pins: f.pins as Record<string, boolean | number | string>, expect: f.expect }));
+    const siblingFindings = await db.query.findings.findMany({ where: eq(findings.sourceId, findingRow.sourceId) });
+    const otherLoopholes = siblingFindings
+      .filter((f) => f.id !== findingRow.id && isLoophole(f.verdict))
+      .map((f) => ({ proposal: f.proposal as AttackProposal }));
 
-    const sameBaseCerts = await db.query.certificates.findMany({ where: eq(certificates.formalizationId, baseFormalizationRow.id) });
-    const certifiedCandidateRows = await Promise.all(
-      sameBaseCerts.map((c) => db.query.attackCandidates.findFirst({ where: eq(attackCandidates.id, c.candidateId) })),
-    );
-    const certifiedCandidates = certifiedCandidateRows.filter((c): c is NonNullable<typeof c> => Boolean(c)).map((c) => Candidate.parse(c.candidate));
+    const inputHash = hashOf({ findingId: body.findingId });
 
-    const inputHash = hashOf({ certificateId: body.certificateId });
+    const useDemoFixtures = body.mode === 'demo' && project.demoTemplate === 'ccpa-2018';
+    const demoProposals = useDemoFixtures ? loadDemoRepairProposals() : undefined;
 
     const { runId, reused } = await runExecutor.start(
       { projectId: project.id, type: 'repair', mode: body.mode, inputHash },
       async (emit: Emit, runId: string) => {
         return runRepairPipeline(
           {
-            certificateId: certificateRow.id,
-            baseFormalizationId: baseFormalizationRow.id,
-            baseFormalization: baseFormalizationRow.ir as Formalization,
-            exploitCandidate,
+            findingId: findingRow.id,
+            finding: { proposal: findingRow.proposal as AttackProposal },
+            otherLoopholes,
+            spans,
             purpose: purposeRow.contract as PurposeContract,
-            fixtures,
-            certifiedCandidates,
-            runId,
+            baseSourceId: findingRow.sourceId,
             mode: body.mode,
+            demoProposals,
+            runId,
           },
           emit,
         );

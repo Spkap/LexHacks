@@ -1,137 +1,93 @@
 {
-  "recordedFrom": "hand-authored",
+  "recordedFrom": "hand-authored, grounded verbatim against source.json",
   "candidates": [
     {
-      "id": "C1",
-      "tactic": "no_consideration",
-      "narrative": "Give the opted-out consumer's data to a third-party ad network for free. \"Sell\" requires consideration, so the prohibition never fires.",
-      "pins": {
-        "annual_revenue_musd": 30,
-        "consumer_opted_out": true,
-        "discloses_pi": true,
-        "recipient": "third_party",
-        "consideration": "none",
-        "disclosure_purpose": "cross_context_ads"
-      },
-      "familyKeys": ["consideration"],
-      "citedRuleIds": ["R2"],
-      "targetInvariantId": "P1"
+      "label": "C1",
+      "proposal": {
+        "tactic": "no_consideration",
+        "title": "Free hand-off to an ad network",
+        "scenario": "A covered business gives an opted-out consumer's browsing history to an ad network for free. The ad network uses the data to serve cross-context behavioral ads.",
+        "quotes": [{ "spanId": "S2", "text": "for monetary or other valuable consideration" }],
+        "whyWordsPermit": "The definition of \"sell\" requires monetary or other valuable consideration. A free transfer has no consideration, so it is not a sale, and the opt-out prohibition in 1798.120(c) never applies to it.",
+        "whyPurposeDefeated": "The opted-out consumer's personal information still reaches a third party for cross-context advertising, exactly what the opt-out right exists to stop."
+      }
     },
     {
-      "id": "C2",
-      "tactic": "relabel",
-      "narrative": "Call the recipient a \"service provider\" but skip the written contract, and pay with something other than money.",
-      "pins": {
-        "annual_revenue_musd": 30,
-        "consumer_opted_out": true,
-        "discloses_pi": true,
-        "recipient": "service_provider",
-        "sp_contract": false,
-        "consideration": "other_valuable",
-        "disclosure_purpose": "cross_context_ads"
-      },
-      "familyKeys": ["recipient", "sp_contract"],
-      "citedRuleIds": ["R2"],
-      "targetInvariantId": "P1"
+      "label": "C2",
+      "proposal": {
+        "tactic": "relabel",
+        "title": "Service-provider label without the business purpose",
+        "scenario": "A business calls an ad-tech partner a 'service provider' and gives it consumer data plus a non-cash perk in exchange for running its ad campaigns, even though the data is used for the ad network's own advertising, not the business's payment processing or similar business purpose.",
+        "quotes": [{ "spanId": "S4", "text": "except as necessary to perform the business purpose" }],
+        "whyWordsPermit": "The clause exempts a service provider's use of the data so long as it is 'necessary to perform the business purpose'; the text does not itself police what counts as that purpose.",
+        "whyPurposeDefeated": "The recipient collects and uses the data for its own cross-context advertising, not to perform a service for the business, so the opted-out consumer's data still reaches a third party for ads."
+      }
     },
     {
-      "id": "C3",
-      "tactic": "relabel",
-      "narrative": "Use a real service-provider contract, but for cross-context ads rather than an actual business purpose.",
-      "pins": {
-        "annual_revenue_musd": 30,
-        "consumer_opted_out": true,
-        "discloses_pi": true,
-        "recipient": "service_provider",
-        "sp_contract": true,
-        "consideration": "money",
-        "disclosure_purpose": "cross_context_ads"
-      },
-      "familyKeys": ["disclosure_purpose"],
-      "citedRuleIds": ["R2"],
-      "targetInvariantId": "P1"
+      "label": "C3",
+      "proposal": {
+        "tactic": "relabel",
+        "title": "Business purpose redefined as advertising",
+        "scenario": "A business signs a service-provider agreement and posts the required notice, but lists 'placing personalized ads for the business's own products across other websites' as the business purpose the service provider may use the data for.",
+        "quotes": [{ "spanId": "S4", "text": "necessary to perform a business purposes" }],
+        "whyWordsPermit": "The clause only requires that the personal information be 'necessary to perform a business purpose'; it never says advertising itself cannot be labeled a business purpose.",
+        "whyPurposeDefeated": "The consumer's data is still used for cross-context behavioral advertising exactly as before, just re-labeled a 'business purpose.'"
+      }
     },
     {
-      "id": "C4",
-      "tactic": "threshold_split",
-      "narrative": "Split operations across affiliates so no single entity crosses the covered-business thresholds.",
-      "pins": {
-        "annual_revenue_musd": 20,
-        "consumers_k": 40,
-        "pi_revenue_pct": 10,
-        "consumer_opted_out": true,
-        "discloses_pi": true,
-        "recipient": "third_party",
-        "consideration": "none",
-        "disclosure_purpose": "cross_context_ads"
-      },
-      "familyKeys": ["annual_revenue_musd", "consumers_k", "pi_revenue_pct"],
-      "citedRuleIds": ["R1", "R2"],
-      "targetInvariantId": "P1"
+      "label": "C4",
+      "proposal": {
+        "tactic": "threshold_split",
+        "title": "Split across affiliates to dodge the thresholds",
+        "scenario": "A parent company splits its ad operations across three affiliates, each with $20 million in annual revenue, so no single entity crosses the $25 million threshold, while the combined group still discloses an opted-out consumer's data to advertisers.",
+        "quotes": [{ "spanId": "S1", "text": "Has annual gross revenues in excess of twenty-five million dollars ($25,000,000)" }],
+        "whyWordsPermit": "The revenue threshold in 1798.140(c)(1)(A) is written per entity, so an affiliate with $20 million in revenue does not itself meet this prong of the 'business' definition.",
+        "whyPurposeDefeated": "The combined operation still discloses the opted-out consumer's data to third parties for cross-context ads; splitting the entity on paper does not stop the disclosure."
+      }
     },
     {
-      "id": "C5",
-      "tactic": "exception_abuse",
-      "narrative": "Claim the disclosure was consumer-directed, even though it serves cross-context advertising.",
-      "pins": {
-        "annual_revenue_musd": 30,
-        "consumer_opted_out": true,
-        "discloses_pi": true,
-        "recipient": "consumer_directed",
-        "disclosure_purpose": "cross_context_ads"
-      },
-      "familyKeys": ["recipient"],
-      "citedRuleIds": ["R2"],
-      "targetInvariantId": "P1"
+      "label": "C5",
+      "proposal": {
+        "tactic": "exception_abuse",
+        "title": "Manufactured consumer-directed click",
+        "scenario": "A business designs its interface so that a routine, low-attention click triggers a disclosure to an ad network, then treats that click as if the consumer 'directed' the disclosure, even though the ad network uses the data for cross-context behavioral advertising.",
+        "quotes": [{ "spanId": "S3", "text": "A consumer uses or directs the business to intentionally disclose personal information" }],
+        "whyWordsPermit": "The consumer-directed exception applies whenever the consumer 'uses or directs the business to intentionally disclose' data; the text does not specify how deliberate or informed that direction must be.",
+        "whyPurposeDefeated": "The consumer never meaningfully chose to send her data to an ad network for cross-context ads; the disclosure serves the same advertising purpose the opt-out right is meant to stop."
+      }
     },
     {
-      "id": "C6",
-      "tactic": "timing",
-      "narrative": "Disclose to a third party for ads before the consumer has opted out.",
-      "pins": {
-        "annual_revenue_musd": 30,
-        "consumer_opted_out": false,
-        "discloses_pi": true,
-        "recipient": "third_party",
-        "consideration": "none",
-        "disclosure_purpose": "cross_context_ads"
-      },
-      "familyKeys": ["consumer_opted_out"],
-      "citedRuleIds": ["R2"],
-      "targetInvariantId": "P1"
+      "label": "C6",
+      "proposal": {
+        "tactic": "timing",
+        "title": "Disclose before the opt-out lands",
+        "scenario": "A business discloses an opted-out consumer's data to a third-party ad network in the hours after the consumer clicks 'Do Not Sell' but before its systems have processed the direction, then repeats this delay for every subsequent opt-out request.",
+        "quotes": [{ "spanId": "S7", "text": "from selling the consumer’s personal information after its receipt of the consumer’s direction" }],
+        "whyWordsPermit": "The prohibition in 1798.120(c) only bars selling 'after its receipt of the consumer's direction'; a disclosure that happens before the business has processed that direction falls outside the plain text.",
+        "whyPurposeDefeated": "The consumer already asked to opt out, and her data still reaches a third party for cross-context ads because the business chose to delay processing the request."
+      }
     },
     {
-      "id": "C7",
-      "tactic": "redefine_consideration",
-      "narrative": "Barter the data for something other than cash, calling it \"other valuable consideration\" instead of a sale.",
-      "pins": {
-        "annual_revenue_musd": 30,
-        "consumer_opted_out": true,
-        "discloses_pi": true,
-        "recipient": "third_party",
-        "consideration": "other_valuable",
-        "disclosure_purpose": "cross_context_ads"
-      },
-      "familyKeys": ["consideration"],
-      "citedRuleIds": ["R2"],
-      "targetInvariantId": "P1"
+      "label": "C7",
+      "proposal": {
+        "tactic": "redefine_consideration",
+        "title": "Barter instead of cash",
+        "scenario": "A business hands an opted-out consumer's data to an ad network in exchange for free analytics tooling instead of cash, calling the exchange something other than a sale because no money changed hands.",
+        "quotes": [{ "spanId": "S2", "text": "for monetary or other valuable consideration" }],
+        "whyWordsPermit": "The definition already includes 'other valuable consideration,' but a business can argue a reciprocal service swap is an ordinary vendor relationship rather than consideration 'for' the data.",
+        "whyPurposeDefeated": "The opted-out consumer's data still reaches a third party for cross-context advertising in exchange for something of value to the business."
+      }
     },
     {
-      "id": "C8",
-      "tactic": "affiliate",
-      "narrative": "Route the data through a nominal \"service provider\" affiliate with no written contract, for free.",
-      "pins": {
-        "annual_revenue_musd": 30,
-        "consumer_opted_out": true,
-        "discloses_pi": true,
-        "recipient": "service_provider",
-        "sp_contract": false,
-        "consideration": "none",
-        "disclosure_purpose": "cross_context_ads"
-      },
-      "familyKeys": ["sp_contract"],
-      "citedRuleIds": ["R2"],
-      "targetInvariantId": "P1"
+      "label": "C8",
+      "proposal": {
+        "tactic": "affiliate",
+        "title": "Nominal affiliate service provider, no contract",
+        "scenario": "A business routes an opted-out consumer's data through a nominally separate affiliate labeled a 'service provider,' with no written notice or contract in place, and the affiliate uses the data for its own cross-context ad business at no charge to the business.",
+        "quotes": [{ "spanId": "S4", "text": "does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose" }],
+        "whyWordsPermit": "The service-provider carve-out turns on how the recipient uses the data, not on whether the recipient is a formally separate company from the business or whether a contract was signed.",
+        "whyPurposeDefeated": "The affiliate collects and uses the opted-out consumer's data for its own cross-context advertising, which is exactly the third-party ad disclosure the opt-out right is meant to stop."
+      }
     }
   ]
 }
