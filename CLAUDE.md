@@ -7,7 +7,8 @@ One line: turn a rule plus its stated purpose into a formal model, let AI propos
 ## Workflow rules (non-negotiable)
 
 - **No git worktrees, no feature branches, no sandboxes.** Work directly on `main`.
-- **Commit after every completed task**, not after every phase. Small, reviewable commits.
+- **Commit once per completed phase**, not after every task. One reviewable commit per phase, covering all its tasks.
+- **Bypass permissions is already granted for this project.** Don't stop to ask for approval on tool calls (file edits, bash commands, deploys, etc.) within the scope of executing the plan. Proceed autonomously through the plan's tasks.
 - Execute the plan file task by task, in order, per its wave structure. Don't skip ahead.
 - **Task 1.6 (the kill test) is a gate.** If the golden CCPA case doesn't produce `SAT` on the original law and `UNSAT` after repair, stop and fix `src/core`, don't paper over it with UI polish.
 - Follow TDD where the plan marks a task `tdd="true"`: write the failing test first, run it, then implement.
