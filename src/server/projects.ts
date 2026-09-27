@@ -4,6 +4,7 @@ import { sha256Hex } from '@/core/canonical';
 import { db } from '@/db/client';
 import { formalizations, projects, purposeContracts, sources, sourceSpans, testFixtures } from '@/db/schema';
 import { logAudit } from './audit';
+import { splitIntoSpans } from './paste-split';
 
 const GOLDEN_SLUG = 'ccpa-2018-benchmark';
 const MAX_PASTE_CHARS = 60000;
@@ -128,7 +129,7 @@ export async function createPasteProject(workspaceId: string, paste: PasteInput)
     .values({ workspaceId, slug, name: paste.title, isPublic: false, demoTemplate: null })
     .returning();
 
-  const spans = [{ id: 'S1', sectionPath: 'full-text', label: paste.title, text: paste.text }];
+  const spans = splitIntoSpans(paste.text, paste.title);
 
   const [sourceRow] = await db
     .insert(sources)

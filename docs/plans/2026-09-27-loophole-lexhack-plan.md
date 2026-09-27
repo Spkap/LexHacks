@@ -73,9 +73,9 @@ Living checklist. Check off a phase/task only after its `Commit` step actually r
   - [x] Task 4.7: Loophole Card `/p/[slug]/findings/[certId]`
   - [x] Task 4.8: Repair Studio `/p/[slug]/repair/[certId]`
   - [x] Task 4.9: Re-attack Report + public replay
-- [ ] [Phase 5: Live import path](#phase-5-live-import-path-h33-to-h37)
-  - [ ] Task 5.1: Paste-a-draft Live Mode
-  - [ ] Task 5.2: Congress.gov import
+- [x] [Phase 5: Live import path](#phase-5-live-import-path-h33-to-h37) — done
+  - [x] Task 5.1: Paste-a-draft Live Mode (now splits by SEC./Section/lettered-subsection markers, capped at 20 spans, feeds the existing live compile-run path)
+  - [x] Task 5.2: Congress.gov import (`src/server/congress.ts` + two routes; unit-tested against mocked fetch; live end-to-end verification needs `CONGRESS_GOV_API_KEY`, which is not yet set)
 - [ ] [Phase 6: Hardening and tests](#phase-6-hardening-and-tests-h37-to-h42)
   - [ ] Task 6.1: Security pass
   - [ ] Task 6.2: Accessibility pass

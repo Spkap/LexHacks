@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { ZodError } from 'zod';
 import { GateError } from '@/core/engine';
+import { CongressApiError } from './congress';
 
 export class NotFoundError extends Error {}
 export class ForbiddenError extends Error {}
@@ -29,6 +30,9 @@ export function toHttpError(e: unknown): HttpError {
   }
   if (e instanceof RateLimitError) {
     return { status: 429, body: { error: 'rate_limited', message: e.message } };
+  }
+  if (e instanceof CongressApiError) {
+    return { status: 502, body: { error: 'congress_import_failed', message: e.message } };
   }
   const requestId = randomUUID();
   console.error(`[${requestId}]`, e);
