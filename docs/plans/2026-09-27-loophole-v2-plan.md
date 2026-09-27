@@ -47,7 +47,7 @@ This is what the team asked for, in their words, and it decides every trade-off 
 - [x] **Phase 0:** Commit the v2 docs
 - [x] **Phase 1:** Trust core (TDD): IR, grounding gate, verdict rule, finding hash, redline
 - [x] **Phase 2:** Agents: attack, jury, repair, purpose helper
-- [ ] **Phase 3:** Data + run pipelines + routes
+- [x] **Phase 3:** Data + run pipelines + routes
 - [ ] **Phase 4:** PIVOT GATE (live golden runs, record Demo Mode fixtures) ← **gate: stop here if it fails**
 - [ ] **Phase 5:** War Room `/a/[slug]`
 - [ ] **Phase 6:** Landing `/` + replay `/r/[slug]` + legacy redirects
