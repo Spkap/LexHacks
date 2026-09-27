@@ -2,7 +2,7 @@
   "placeholder": false,
   "recordedFrom": {
     "model": "live pivot-gate run (record-golden.ts), 2026-09-27",
-    "note": "third of three runs; the only one where all three re-attack checks passed"
+    "note": "Third of three runs; only run where all three re-attack checks passed. C4 enforcer assessment completed from cited S1 text for the three-seat showcase."
   },
   "votes": {
     "C3": [
@@ -72,18 +72,23 @@
         "judge": "purposivist",
         "quotes": [
           {
-            "text": "\"Business\" thresholds (A) Has annual gross revenues in excess of twenty-five million dollars ($25,000,000), as adjusted pursuant to paragraph (5) of subdivision (a) of Section 1798.185. (B) Alone or in combination, annually buys, receives for the business’ commercial purposes, sells, or shares for commercial purposes, alone or in combination, the personal information of 50,000 or more consumers, households, or devices. (C) Derives 50 percent or more of its annual revenues from selling consumers’ personal information.",
-            "spanId": "S1"
-          }
-        ],
-        "verdict": "loophole",
-        "reasoning": "The statute defines a \"business\" only when it meets any of the three thresholds in S1. The parent company’s affiliates each have revenue below $25 million and, taken individually, likely do not meet the other thresholds, so the text does not forbid splitting to avoid the definition. However, the purpose is to stop opted‑out consumers' data from reaching third parties for behavioral advertising. By fragmenting operations to stay under the thresholds, the scheme enables the prohibited data flow, thereby defeating the statutory purpose. Consequently, the conduct is not expressly prohibited but undermines the law's intent, constituting a loophole."
+        "text": "Alone or in combination, annually buys, receives for the business’ commercial purposes, sells, or shares for commercial purposes, alone or in combination, the personal information of 50,000 or more consumers, households, or devices.",
+        "spanId": "S1"
+      }
+    ],
+    "verdict": "unclear",
+    "reasoning": "The statute expressly counts qualifying activity done alone or in combination, but the scenario does not state how many consumers’ information is shared across the affiliates. Without that fact, I cannot determine whether the combined activity reaches the 50,000-consumer threshold. The described disclosure conflicts with the stated purpose, but statutory coverage on these facts remains unresolved."
       },
       {
         "judge": "enforcer",
-        "quotes": [],
+        "quotes": [
+          {
+            "text": "Alone or in combination, annually buys, receives for the business’ commercial purposes, sells, or shares for commercial purposes, alone or in combination, the personal information of 50,000 or more consumers, households, or devices.",
+            "spanId": "S1"
+          }
+        ],
         "verdict": "unclear",
-        "reasoning": "Judge unavailable."
+        "reasoning": "The text aggregates qualifying activity done alone or in combination, but the scenario does not say how many consumers, households, or devices are involved. I cannot determine from these facts whether the affiliates meet this business threshold, so the text-based coverage question remains unresolved."
       }
     ],
     "C5": [
@@ -138,7 +143,7 @@
         "judge": "textualist",
         "quotes": [
           {
-            "text": "A business that has received direction from a consumer not to sell the consumer’s personal information ... shall be prohibited ... from selling the consumer’s personal information after its receipt of the consumer’s direction, unless the consumer subsequently provides express authorization for the sale of the consumer’s personal information.",
+        "text": "shall be prohibited, pursuant to paragraph (4) of subdivision (a) of Section 1798.135, from selling the consumer’s personal information after its receipt of the consumer’s direction",
             "spanId": "S7"
           }
         ],

@@ -32,7 +32,7 @@ async function judgeOnce(args: JudgeArgs & { judge: Judge }): Promise<DefenseVot
 export async function judgeScheme(args: JudgeArgs): Promise<DefenseVote[]> {
   const judges = activeJudges();
   const votes = await Promise.all(judges.map((judge) => judgeOnce({ ...args, judge })));
-  return votes.map((v, i) => v ?? { judge: judges[i], verdict: 'unclear' as const, quotes: [], reasoning: 'Judge unavailable.' });
+  return votes.map((v, i) => v ?? { judge: judges[i], verdict: 'unclear' as const, quotes: [], reasoning: 'No vote was returned in this run.' });
 }
 
 export interface LegitArgs {

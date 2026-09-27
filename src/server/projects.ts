@@ -1,8 +1,8 @@
 import { randomBytes, randomUUID } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { sha256Hex } from '@/core/canonical';
 import { db } from '@/db/client';
-import { auditEvents, projects, purposeContracts, sources, sourceSpans, testFixtures } from '@/db/schema';
+import { projects, sources, sourceSpans } from '@/db/schema';
 import { logAudit } from './audit';
 import { splitIntoSpans } from './paste-split';
 
@@ -20,98 +20,64 @@ export async function getProjectBySlug(slug: string) {
 export const GOLDEN_PROJECT_SLUG = GOLDEN_SLUG;
 
 export async function forkGoldenProject(workspaceId: string): Promise<{ projectId: string; slug: string }> {
-  const [sourceRows, spanRows, purposeRows, fixtureRows] = await db.batch([
-    db.select({ goldenId: projects.id, source: sources })
-      .from(sources)
-      .innerJoin(projects, eq(sources.projectId, projects.id))
-      .where(eq(projects.slug, GOLDEN_SLUG))
-      .limit(1),
-    db.select({ span: sourceSpans })
-      .from(sourceSpans)
-      .innerJoin(sources, eq(sourceSpans.sourceId, sources.id))
-      .innerJoin(projects, eq(sources.projectId, projects.id))
-      .where(eq(projects.slug, GOLDEN_SLUG)),
-    db.select({ purpose: purposeContracts })
-      .from(purposeContracts)
-      .innerJoin(projects, eq(purposeContracts.projectId, projects.id))
-      .where(eq(projects.slug, GOLDEN_SLUG))
-      .limit(1),
-    db.select({ fixture: testFixtures })
-      .from(testFixtures)
-      .innerJoin(projects, eq(testFixtures.projectId, projects.id))
-      .where(eq(projects.slug, GOLDEN_SLUG)),
-  ]);
-  const goldenSourceRow = sourceRows[0];
-  if (!goldenSourceRow) throw new Error(`golden benchmark project '${GOLDEN_SLUG}' is not seeded`);
-
-  const { goldenId, source: goldenSource } = goldenSourceRow;
-  const goldenSpans = spanRows.map(({ span }) => span);
-  const goldenPurpose = purposeRows[0]?.purpose;
-  const goldenFixtures = fixtureRows.map(({ fixture }) => fixture);
-
   const projectId = randomUUID();
   const sourceId = randomUUID();
   const slug = uniqueSlug('ccpa-2018-fork');
-  await db.batch([
-    db.insert(projects).values({
-      id: projectId,
-      workspaceId,
-      slug,
-      name: 'CCPA 2018 (fork)',
-      isPublic: false,
-      demoTemplate: 'ccpa-2018',
-      forkedFrom: goldenId,
-    }),
-    db.insert(sources).values({
-      id: sourceId,
-      projectId,
-      title: goldenSource.title,
-      jurisdiction: goldenSource.jurisdiction,
-      canonicalUrl: goldenSource.canonicalUrl,
-      officialVersionId: goldenSource.officialVersionId,
-      retrievedAt: goldenSource.retrievedAt,
-      sha256: goldenSource.sha256,
-      text: goldenSource.text,
-      metadata: goldenSource.metadata,
-    }),
-    ...(goldenSpans.length > 0
-      ? [db.insert(sourceSpans).values(goldenSpans.map((s) => ({
-        sourceId,
-        id: s.id,
-        sectionPath: s.sectionPath,
-        label: s.label,
-        text: s.text,
-        startOffset: s.startOffset,
-        endOffset: s.endOffset,
-      })))]
-      : []),
-    ...(goldenPurpose
-      ? [db.insert(purposeContracts).values({
-        projectId,
-        version: goldenPurpose.version,
-        status: goldenPurpose.status,
-        contract: goldenPurpose.contract,
-        hash: goldenPurpose.hash,
-      })]
-      : []),
-    ...(goldenFixtures.length > 0
-      ? [db.insert(testFixtures).values(goldenFixtures.map((f) => ({
-        projectId,
-        label: f.label,
-        scenario: f.scenario,
-      })))]
-      : []),
-    db.insert(auditEvents).values({
-      projectId,
-      actor: workspaceId,
-      action: 'fork',
-      entityType: 'project',
-      entityId: projectId,
-      metadata: { forkedFrom: goldenId },
-    }),
-  ]);
-
-  return { projectId, slug };
+  const result = await db.execute<{ projectId: string; slug: string }>(sql`
+    with golden as (
+      select projects.id as golden_id, sources.*
+      from projects
+      inner join sources on sources.project_id = projects.id
+      where projects.slug = ${GOLDEN_SLUG}
+      limit 1
+    ),
+    new_project as (
+      insert into projects (id, workspace_id, slug, name, is_public, demo_template, forked_from)
+      select ${projectId}::uuid, ${workspaceId}::uuid, ${slug}, 'CCPA 2018 (fork)', false, 'ccpa-2018', golden_id
+      from golden
+      returning id, slug
+    ),
+    new_source as (
+      insert into sources (id, project_id, title, jurisdiction, canonical_url, official_version_id, retrieved_at, sha256, text, metadata)
+      select ${sourceId}::uuid, new_project.id, golden.title, golden.jurisdiction, golden.canonical_url,
+        golden.official_version_id, golden.retrieved_at, golden.sha256, golden.text, golden.metadata
+      from golden
+      cross join new_project
+      returning id
+    ),
+    copied_spans as (
+      insert into source_spans (source_id, id, section_path, label, text, start_offset, end_offset)
+      select new_source.id, source_spans.id, source_spans.section_path, source_spans.label, source_spans.text,
+        source_spans.start_offset, source_spans.end_offset
+      from source_spans
+      inner join golden on source_spans.source_id = golden.id
+      cross join new_source
+    ),
+    copied_purpose as (
+      insert into purpose_contracts (project_id, version, status, contract, hash)
+      select new_project.id, purpose_contracts.version, purpose_contracts.status, purpose_contracts.contract, purpose_contracts.hash
+      from purpose_contracts
+      inner join golden on purpose_contracts.project_id = golden.golden_id
+      cross join new_project
+    ),
+    copied_fixtures as (
+      insert into test_fixtures (project_id, label, scenario)
+      select new_project.id, test_fixtures.label, test_fixtures.scenario
+      from test_fixtures
+      inner join golden on test_fixtures.project_id = golden.golden_id
+      cross join new_project
+    ),
+    audit as (
+      insert into audit_events (project_id, actor, action, entity_type, entity_id, metadata)
+      select new_project.id, ${workspaceId}, 'fork', 'project', ${projectId}, jsonb_build_object('forkedFrom', golden.golden_id)
+      from golden
+      cross join new_project
+    )
+    select id as "projectId", slug from new_project
+  `);
+  const fork = result.rows[0];
+  if (!fork) throw new Error(`golden benchmark project '${GOLDEN_SLUG}' is not seeded`);
+  return fork;
 }
 
 export interface PasteInput {

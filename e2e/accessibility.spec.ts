@@ -9,7 +9,7 @@ async function assertNoSeriousViolations(page: Page) {
 
 async function forkGolden(page: Page): Promise<string> {
   await page.goto('/?demo=1');
-  await page.getByRole('button', { name: 'Watch it catch a real loophole' }).click();
+  await page.getByRole('button', { name: 'Open the CCPA demo' }).click();
   await page.waitForURL(/\/a\/(.+)\?demo=1$/, { timeout: 30_000 });
   const match = page.url().match(/\/a\/([^?]+)/);
   if (!match) throw new Error('could not extract project slug from URL');
@@ -33,7 +33,7 @@ test.describe('accessibility: 0 serious/critical axe violations per screen', () 
     await assertNoSeriousViolations(page);
   });
 
-  test('Public replay', async ({ page }) => {
+  test('Public report', async ({ page }) => {
     await page.goto('/r/ccpa-2018-benchmark');
     await assertNoSeriousViolations(page);
   });
@@ -42,7 +42,7 @@ test.describe('accessibility: 0 serious/critical axe violations per screen', () 
 test('keyboard-only: landing can open a War Room without a mouse', async ({ page }) => {
   await page.goto('/?demo=1');
   for (let i = 0; i < 4; i += 1) await page.keyboard.press('Tab');
-  const benchmarkButton = page.getByRole('button', { name: 'Watch it catch a real loophole' });
+  const benchmarkButton = page.getByRole('button', { name: 'Open the CCPA demo' });
   await expect(benchmarkButton).toBeFocused();
   await page.keyboard.press('Enter');
   await page.waitForURL(/\/a\/.+\?demo=1$/, { timeout: 30_000 });
