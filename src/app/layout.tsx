@@ -18,9 +18,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Loophole — Fuzz your law before AI agents do.",
+  title: "Loophole — Paste a law. Watch AI look for the loophole.",
   description:
-    "Loophole compiles a rule and its purpose into a checkable model, lets AI attack it, and only counts exploits a solver can prove.",
+    "An Attack agent proposes loopholes grounded in a rule's own words, a jury of 3 AI judges rules on each, and a human breaks ties.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

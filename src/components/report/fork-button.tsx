@@ -16,7 +16,7 @@ export function ForkButton() {
       body: JSON.stringify({ template: "ccpa-2018" }),
     });
     const data = await res.json();
-    if (res.ok) router.push(`/p/${data.slug}/source`);
+    if (res.ok) router.push(`/a/${data.slug}`);
     else setLoading(false);
   }
 

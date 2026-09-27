@@ -32,7 +32,7 @@ export function GalleryActions() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? data.error ?? "Failed to create project");
-      router.push(`/p/${data.slug}/source`);
+      router.push(`/a/${data.slug}`);
     } catch (e) {
       setError((e as Error).message);
       setLoading(null);
@@ -50,7 +50,7 @@ export function GalleryActions() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? data.error ?? "Failed to create project");
-      router.push(`/p/${data.slug}/source`);
+      router.push(`/a/${data.slug}`);
     } catch (e) {
       setError((e as Error).message);
       setLoading(null);

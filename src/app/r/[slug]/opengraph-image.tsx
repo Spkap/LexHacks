@@ -6,9 +6,11 @@ export const contentType = "image/png";
 
 export default async function OgImage({ params }: { params: { slug: string } }) {
   let title = "Loophole";
+  let confirmedCount = 0;
   try {
     const data = await loadReportData(params.slug);
     title = data.project.name;
+    confirmedCount = data.findings.filter((f) => f.verdict === "confirmed").length;
   } catch {
     // fall back to default title
   }
@@ -30,10 +32,8 @@ export default async function OgImage({ params }: { params: { slug: string } }) 
         }}
       >
         <div>{title}</div>
-        <div style={{ display: "flex", gap: 24, marginTop: 24, fontSize: 40 }}>
-          <span style={{ color: "#0f5c5a" }}>SAT</span>
-          <span>→</span>
-          <span style={{ color: "#d65a4a" }}>UNSAT</span>
+        <div style={{ display: "flex", gap: 16, marginTop: 24, fontSize: 32, color: "#d65a4a" }}>
+          <span>{confirmedCount} loopholes confirmed by adversarial review</span>
         </div>
       </div>
     ),
