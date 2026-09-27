@@ -1,0 +1,81 @@
+{
+  "id": "LHP-001",
+  "version": 2,
+  "sourceId": "ccpa-2018-ab375",
+  "vars": [
+    { "name": "annual_revenue_musd", "label": "Annual revenue (million USD)", "spanIds": ["S1"], "origin": "source", "sort": "int", "min": 0, "max": 1000 },
+    { "name": "consumers_k", "label": "Consumers, households, or devices (thousands)", "spanIds": ["S1"], "origin": "source", "sort": "int", "min": 0, "max": 10000 },
+    { "name": "pi_revenue_pct", "label": "Percent of annual revenue from selling PI", "spanIds": ["S1"], "origin": "source", "sort": "int", "min": 0, "max": 100 },
+    { "name": "discloses_pi", "label": "Discloses personal information", "spanIds": ["S2"], "origin": "source", "sort": "bool" },
+    { "name": "recipient", "label": "Recipient of the disclosure", "spanIds": ["S2", "S3", "S4"], "origin": "source", "sort": "enum", "values": ["third_party", "service_provider", "consumer_directed"] },
+    { "name": "consideration", "label": "Consideration received for the disclosure", "spanIds": ["S2"], "origin": "source", "sort": "enum", "values": ["money", "other_valuable", "none"] },
+    { "name": "disclosure_purpose", "label": "Purpose of the disclosure", "spanIds": ["S4"], "origin": "source", "sort": "enum", "values": ["cross_context_ads", "business_purpose"] },
+    { "name": "sp_contract", "label": "Written service-provider contract in place", "spanIds": ["S4"], "origin": "source", "sort": "bool" },
+    { "name": "opt_out_link", "label": "\"Do Not Sell My Personal Information\" link provided", "spanIds": ["S5"], "origin": "source", "sort": "bool" },
+    { "name": "consumer_opted_out", "label": "Consumer has directed the business not to sell", "spanIds": ["S6", "S7"], "origin": "source", "sort": "bool" }
+  ],
+  "definitions": [
+    {
+      "name": "covered_business",
+      "label": "Covered business",
+      "formula": "or(gt(annual_revenue_musd, 25), ge(consumers_k, 50), ge(pi_revenue_pct, 50))",
+      "spanIds": ["S1"],
+      "status": "approved",
+      "plain": "A business that meets the revenue, consumer-count, or PI-revenue-share threshold."
+    },
+    {
+      "name": "sp_exception",
+      "label": "Service provider exception",
+      "formula": "and(is(recipient, service_provider), sp_contract, is(disclosure_purpose, business_purpose))",
+      "spanIds": ["S4"],
+      "status": "approved",
+      "plain": "The recipient is a service provider, under a written contract, acting for a business purpose."
+    },
+    {
+      "name": "third_party_disclosure",
+      "label": "Third-party disclosure",
+      "formula": "and(discloses_pi, or(is(recipient, third_party), and(is(recipient, service_provider), not(sp_exception))))",
+      "spanIds": ["S2", "S3", "S4"],
+      "status": "approved",
+      "plain": "Personal information reaches a third party, or a nominal service provider outside the contract exception."
+    },
+    {
+      "name": "sell",
+      "label": "Sell",
+      "formula": "and(third_party_disclosure, not(is(consideration, none)))",
+      "spanIds": ["S2"],
+      "status": "approved",
+      "plain": "A third-party disclosure made for money or other valuable consideration."
+    },
+    {
+      "name": "share",
+      "label": "Share",
+      "formula": "and(third_party_disclosure, is(disclosure_purpose, cross_context_ads))",
+      "spanIds": ["S2", "S3", "S4"],
+      "status": "approved",
+      "plain": "A third-party disclosure for cross-context behavioral advertising, with or without payment."
+    }
+  ],
+  "rules": [
+    {
+      "id": "R1'",
+      "kind": "duty",
+      "label": "Opt-out link duty (sell or share)",
+      "when": "and(covered_business, or(sell, share))",
+      "require": "opt_out_link",
+      "spanIds": ["S5"],
+      "status": "approved",
+      "plain": "A covered business that sells or shares personal information must provide a \"Do Not Sell\" link."
+    },
+    {
+      "id": "R2'",
+      "kind": "prohibition",
+      "label": "No sale or share after opt-out",
+      "when": "and(covered_business, consumer_opted_out)",
+      "require": "and(not(sell), not(share))",
+      "spanIds": ["S6", "S7"],
+      "status": "approved",
+      "plain": "A covered business must not sell or share the personal information of a consumer who has opted out."
+    }
+  ]
+}

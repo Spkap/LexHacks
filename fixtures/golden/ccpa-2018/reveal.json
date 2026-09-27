@@ -1,0 +1,23 @@
+{
+  "id": "ccpa-2018-ab375-reveal",
+  "title": "Civil Code §1798.140 (current), \"Share\" and \"Cross-context behavioral advertising\"",
+  "jurisdiction": "US-CA",
+  "canonicalUrl": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=1798.140",
+  "officialVersionId": "Civ. Code §1798.140, current codification (as amended through Stats. 2025, Ch. 67, Sec. 27)",
+  "retrievedAt": "2026-09-27",
+  "termsNote": "Never loaded by the attack pipeline. Read only by the History reveal UI after a certified finding, to show what the 2020 CPRA amendment actually added.",
+  "spans": [
+    {
+      "id": "R1",
+      "sectionPath": "1798.140(k)",
+      "label": "\"Cross-context behavioral advertising\"",
+      "text": "“Cross-context behavioral advertising” means the targeting of advertising to a consumer based on the consumer’s personal information obtained from the consumer’s activity across businesses, distinctly branded internet websites, applications, or services, other than the business, distinctly branded internet website, application, or service with which the consumer intentionally interacts."
+    },
+    {
+      "id": "R2",
+      "sectionPath": "1798.140(ah)(1)",
+      "label": "\"Share\"",
+      "text": "(1) “Share,” “shared,” or “sharing” means sharing, renting, releasing, disclosing, disseminating, making available, transferring, or otherwise communicating orally, in writing, or by electronic or other means, a consumer’s personal information by the business to a third party for cross-context behavioral advertising, whether or not for monetary or other valuable consideration, including transactions between a business and a third party for cross-context behavioral advertising for the benefit of a business in which no money is exchanged."
+    }
+  ]
+}

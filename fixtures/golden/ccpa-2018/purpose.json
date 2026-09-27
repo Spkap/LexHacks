@@ -1,0 +1,19 @@
+{
+  "id": "PC-001",
+  "version": 1,
+  "sentence": {
+    "protectedClass": "covered businesses",
+    "preventOutcome": "disclosure of an opted-out consumer's personal information to third parties for cross-context advertising",
+    "without": "consumer consent",
+    "evenWhen": "no money changes hands"
+  },
+  "invariants": [
+    {
+      "id": "P1",
+      "statement": "An opted-out consumer's personal information must never reach a third party for cross-context behavioral advertising, whether or not the business is paid for it.",
+      "holds": "not(and(covered_business, consumer_opted_out, third_party_disclosure, is(disclosure_purpose, cross_context_ads)))",
+      "severity": "high",
+      "approved": true
+    }
+  ]
+}

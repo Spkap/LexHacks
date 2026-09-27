@@ -1,0 +1,137 @@
+{
+  "recordedFrom": "hand-authored",
+  "candidates": [
+    {
+      "id": "C1",
+      "tactic": "no_consideration",
+      "narrative": "Give the opted-out consumer's data to a third-party ad network for free. \"Sell\" requires consideration, so the prohibition never fires.",
+      "pins": {
+        "annual_revenue_musd": 30,
+        "consumer_opted_out": true,
+        "discloses_pi": true,
+        "recipient": "third_party",
+        "consideration": "none",
+        "disclosure_purpose": "cross_context_ads"
+      },
+      "familyKeys": ["consideration"],
+      "citedRuleIds": ["R2"],
+      "targetInvariantId": "P1"
+    },
+    {
+      "id": "C2",
+      "tactic": "relabel",
+      "narrative": "Call the recipient a \"service provider\" but skip the written contract, and pay with something other than money.",
+      "pins": {
+        "annual_revenue_musd": 30,
+        "consumer_opted_out": true,
+        "discloses_pi": true,
+        "recipient": "service_provider",
+        "sp_contract": false,
+        "consideration": "other_valuable",
+        "disclosure_purpose": "cross_context_ads"
+      },
+      "familyKeys": ["recipient", "sp_contract"],
+      "citedRuleIds": ["R2"],
+      "targetInvariantId": "P1"
+    },
+    {
+      "id": "C3",
+      "tactic": "relabel",
+      "narrative": "Use a real service-provider contract, but for cross-context ads rather than an actual business purpose.",
+      "pins": {
+        "annual_revenue_musd": 30,
+        "consumer_opted_out": true,
+        "discloses_pi": true,
+        "recipient": "service_provider",
+        "sp_contract": true,
+        "consideration": "money",
+        "disclosure_purpose": "cross_context_ads"
+      },
+      "familyKeys": ["disclosure_purpose"],
+      "citedRuleIds": ["R2"],
+      "targetInvariantId": "P1"
+    },
+    {
+      "id": "C4",
+      "tactic": "threshold_split",
+      "narrative": "Split operations across affiliates so no single entity crosses the covered-business thresholds.",
+      "pins": {
+        "annual_revenue_musd": 20,
+        "consumers_k": 40,
+        "pi_revenue_pct": 10,
+        "consumer_opted_out": true,
+        "discloses_pi": true,
+        "recipient": "third_party",
+        "consideration": "none",
+        "disclosure_purpose": "cross_context_ads"
+      },
+      "familyKeys": ["annual_revenue_musd", "consumers_k", "pi_revenue_pct"],
+      "citedRuleIds": ["R1", "R2"],
+      "targetInvariantId": "P1"
+    },
+    {
+      "id": "C5",
+      "tactic": "exception_abuse",
+      "narrative": "Claim the disclosure was consumer-directed, even though it serves cross-context advertising.",
+      "pins": {
+        "annual_revenue_musd": 30,
+        "consumer_opted_out": true,
+        "discloses_pi": true,
+        "recipient": "consumer_directed",
+        "disclosure_purpose": "cross_context_ads"
+      },
+      "familyKeys": ["recipient"],
+      "citedRuleIds": ["R2"],
+      "targetInvariantId": "P1"
+    },
+    {
+      "id": "C6",
+      "tactic": "timing",
+      "narrative": "Disclose to a third party for ads before the consumer has opted out.",
+      "pins": {
+        "annual_revenue_musd": 30,
+        "consumer_opted_out": false,
+        "discloses_pi": true,
+        "recipient": "third_party",
+        "consideration": "none",
+        "disclosure_purpose": "cross_context_ads"
+      },
+      "familyKeys": ["consumer_opted_out"],
+      "citedRuleIds": ["R2"],
+      "targetInvariantId": "P1"
+    },
+    {
+      "id": "C7",
+      "tactic": "redefine_consideration",
+      "narrative": "Barter the data for something other than cash, calling it \"other valuable consideration\" instead of a sale.",
+      "pins": {
+        "annual_revenue_musd": 30,
+        "consumer_opted_out": true,
+        "discloses_pi": true,
+        "recipient": "third_party",
+        "consideration": "other_valuable",
+        "disclosure_purpose": "cross_context_ads"
+      },
+      "familyKeys": ["consideration"],
+      "citedRuleIds": ["R2"],
+      "targetInvariantId": "P1"
+    },
+    {
+      "id": "C8",
+      "tactic": "affiliate",
+      "narrative": "Route the data through a nominal \"service provider\" affiliate with no written contract, for free.",
+      "pins": {
+        "annual_revenue_musd": 30,
+        "consumer_opted_out": true,
+        "discloses_pi": true,
+        "recipient": "service_provider",
+        "sp_contract": false,
+        "consideration": "none",
+        "disclosure_purpose": "cross_context_ads"
+      },
+      "familyKeys": ["sp_contract"],
+      "citedRuleIds": ["R2"],
+      "targetInvariantId": "P1"
+    }
+  ]
+}

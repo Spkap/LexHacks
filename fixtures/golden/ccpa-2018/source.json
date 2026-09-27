@@ -1,0 +1,54 @@
+{
+  "id": "ccpa-2018-ab375",
+  "title": "California Consumer Privacy Act of 2018 (AB-375, chaptered)",
+  "jurisdiction": "US-CA",
+  "canonicalUrl": "https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=201720180AB375",
+  "officialVersionId": "AB-375 Chapter 55, Statutes of 2018 (version 20170AB37591CHP)",
+  "retrievedAt": "2026-09-27",
+  "termsNote": "California Legislative Information, public official text (chaptered 2018-06-28). Cross-checked against LegiScan's independent chaptered-text mirror for the same version id.",
+  "spans": [
+    {
+      "id": "S1",
+      "sectionPath": "1798.140(c)(1)(A)-(C)",
+      "label": "\"Business\" thresholds",
+      "text": "(A) Has annual gross revenues in excess of twenty-five million dollars ($25,000,000), as adjusted pursuant to paragraph (5) of subdivision (a) of Section 1798.185.\n\n(B) Alone or in combination, annually buys, receives for the business’ commercial purposes, sells, or shares for commercial purposes, alone or in combination, the personal information of 50,000 or more consumers, households, or devices.\n\n(C) Derives 50 percent or more of its annual revenues from selling consumers’ personal information."
+    },
+    {
+      "id": "S2",
+      "sectionPath": "1798.140(t)(1)",
+      "label": "\"Sell\"",
+      "text": "“Sell,” “selling,” “sale,” or “sold,” means selling, renting, releasing, disclosing, disseminating, making available, transferring, or otherwise communicating orally, in writing, or by electronic or other means, a consumer’s personal information by the business to another business or a third party for monetary or other valuable consideration."
+    },
+    {
+      "id": "S3",
+      "sectionPath": "1798.140(t)(2)(A)",
+      "label": "Consumer-directed disclosure exception",
+      "text": "(A) A consumer uses or directs the business to intentionally disclose personal information or uses the business to intentionally interact with a third party, provided the third party does not also sell the personal information, unless that disclosure would be consistent with the provisions of this title. An intentional interaction occurs when the consumer intends to interact with the third party, via one or more deliberate interactions. Hovering over, muting, pausing, or closing a given piece of content does not constitute a consumer’s intent to interact with a third party."
+    },
+    {
+      "id": "S4",
+      "sectionPath": "1798.140(t)(2)(C)",
+      "label": "Service provider exception",
+      "text": "(C) The business uses or shares with a service provider personal information of a consumer that is necessary to perform a business purposes if both of the following conditions are met: services that the service provider performs on the business’ behalf, provided that the service provider also does not sell the personal information.\n\n(i) The business has provided notice that information being used or shared in its terms and conditions consistent with Section 1798.135.\n\n(ii) The service provider does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose."
+    },
+    {
+      "id": "S5",
+      "sectionPath": "1798.135(a)(1)",
+      "label": "\"Do Not Sell My Personal Information\" link duty",
+      "text": "(1) Provide a clear and conspicuous link on the business’ Internet homepage, titled “Do Not Sell My Personal Information,” to an Internet Web page that enables a consumer, or a person authorized by the consumer, to opt out of the sale of the consumer’s personal information. A business shall not require a consumer to create an account in order to direct the business not to sell the consumer’s personal information."
+    },
+    {
+      "id": "S6",
+      "sectionPath": "1798.120(a)",
+      "label": "Right to opt out",
+      "text": "(a) A consumer shall have the right, at any time, to direct a business that sells personal information about the consumer to third parties not to sell the consumer’s personal information. This right may be referred to as the right to opt out."
+    },
+    {
+      "id": "S7",
+      "sectionPath": "1798.120(c)",
+      "label": "Prohibition on selling after opt-out",
+      "text": "(c) A business that has received direction from a consumer not to sell the consumer’s personal information or, in the case of a minor consumer’s personal information has not received consent to sell the minor consumer’s personal information shall be prohibited, pursuant to paragraph (4) of subdivision (a) of Section 1798.135, from selling the consumer’s personal information after its receipt of the consumer’s direction, unless the consumer subsequently provides express authorization for the sale of the consumer’s personal information."
+    }
+  ],
+  "sha256": "67fcbcb0e62759aa6e03a5c4ed690cb345778039d6676a2447022fdc708cf64c"
+}

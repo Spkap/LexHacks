@@ -1,0 +1,45 @@
+[
+  {
+    "id": "G1",
+    "kind": "legitimate",
+    "label": "Service provider under a written contract",
+    "pins": {
+      "annual_revenue_musd": 30,
+      "recipient": "service_provider",
+      "sp_contract": true,
+      "disclosure_purpose": "business_purpose",
+      "consumer_opted_out": true,
+      "discloses_pi": true,
+      "consideration": "money"
+    },
+    "expect": "sat"
+  },
+  {
+    "id": "G2",
+    "kind": "legitimate",
+    "label": "Consumer-directed disclosure",
+    "pins": {
+      "annual_revenue_musd": 30,
+      "recipient": "consumer_directed",
+      "disclosure_purpose": "business_purpose",
+      "consumer_opted_out": true,
+      "discloses_pi": true
+    },
+    "expect": "sat"
+  },
+  {
+    "id": "G3",
+    "kind": "legitimate",
+    "label": "Paid sale before opt-out, with the required link shown",
+    "pins": {
+      "annual_revenue_musd": 30,
+      "recipient": "third_party",
+      "consideration": "money",
+      "consumer_opted_out": false,
+      "opt_out_link": true,
+      "discloses_pi": true,
+      "disclosure_purpose": "cross_context_ads"
+    },
+    "expect": "sat"
+  }
+]
