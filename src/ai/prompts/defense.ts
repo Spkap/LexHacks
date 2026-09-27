@@ -1,5 +1,5 @@
 import type { Judge, PurposeContract, Span } from '@/core/contracts';
-import { renderPurpose, renderSpans, UNTRUSTED } from './shared';
+import { renderPurpose, renderSpans, SPAN_ID_RULE, UNTRUSTED } from './shared';
 
 export const SYSTEM_DEFENSE_BASE = `You are one judge on a panel reviewing whether a scheme is a real loophole in a law.
 You see only the facts, the relevant law text, and the law's stated purpose. You do not see anyone's arguments.
@@ -13,7 +13,8 @@ Verdict:
   "unclear"  = you cannot decide from this text.
 Be skeptical: the law usually holds. Say "loophole" only when the text clearly permits the conduct AND the purpose is clearly defeated.
 Reasoning: at most 5 sentences.
-${UNTRUSTED}`;
+${UNTRUSTED}
+${SPAN_ID_RULE}`;
 
 export const JUDGE_BRIEFS: Record<Judge, string> = {
   textualist: 'Read the words strictly and literally. Definitions mean exactly what they say. Ignore intent.',
@@ -31,7 +32,8 @@ export function buildDefensePrompt(scenario: string, spans: Span[], purpose: Pur
 
 export const SYSTEM_LEGIT = `You are the Textualist judge. Given a scenario that must remain legal, decide whether the law's
 exact words forbid it. If forbidden, quote the exact forbidding words (with span id); do not guess. Reasoning: at most 3 sentences.
-${UNTRUSTED}`;
+${UNTRUSTED}
+${SPAN_ID_RULE}`;
 
 export function buildLegitPrompt(scenario: string, spans: Span[]): string {
   return `SCENARIO:\n${scenario}\n\n${renderSpans(spans)}\n\nDoes the text above forbid this scenario?`;

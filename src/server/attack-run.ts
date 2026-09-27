@@ -120,7 +120,7 @@ export async function runAttackPipeline(input: AttackRunInput, emit: Emit): Prom
     await emit('candidate.verdict', { stage: 'candidate.verdict', candidateId, findingId: findingId ?? '', status });
   }
 
-  if (input.mode === 'demo' && input.demoCandidates) {
+  if (input.demoCandidates) {
     for (const { label, proposal } of input.demoCandidates) {
       await processProposal(proposal, label, input.demoVotes?.[label]);
     }

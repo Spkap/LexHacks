@@ -1,11 +1,14 @@
 {
-  "placeholder": true,
-  "recordedFrom": null,
+  "placeholder": false,
+  "recordedFrom": {
+    "model": "live pivot-gate run (record-golden.ts), 2026-09-27",
+    "note": "third of three runs; the only one where all three re-attack checks passed"
+  },
   "result": {
-    "pass": false,
-    "loopholesBefore": 0,
+    "pass": true,
+    "loopholesBefore": 3,
     "loopholesAfter": 0,
-    "legitKept": 0,
+    "legitKept": 3,
     "legitTotal": 3
   }
 }

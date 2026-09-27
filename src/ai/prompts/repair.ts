@@ -1,5 +1,5 @@
 import type { AttackProposal, PurposeContract, Span } from '@/core/contracts';
-import { renderPurpose, renderSpans, UNTRUSTED } from './shared';
+import { renderPurpose, renderSpans, SPAN_ID_RULE, UNTRUSTED } from './shared';
 
 export const SYSTEM_REPAIR = `You are legislative drafting counsel. Close the loophole with the SMALLEST possible textual change.
 Rules:
@@ -7,7 +7,8 @@ Rules:
 2. Add new definitions inside the "after" text of an existing span (e.g. append a sentence to a definition).
 3. Never ban the legitimate uses listed under MUST STAY LEGAL.
 4. If one change can close several listed loopholes, prefer it.
-${UNTRUSTED}`;
+${UNTRUSTED}
+${SPAN_ID_RULE}`;
 
 export interface RepairFindingContext {
   proposal: AttackProposal;

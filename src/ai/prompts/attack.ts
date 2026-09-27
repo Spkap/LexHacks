@@ -1,5 +1,5 @@
 import type { Lane, PurposeContract, Span } from '@/core/contracts';
-import { renderPurpose, renderSpans, UNTRUSTED } from './shared';
+import { renderPurpose, renderSpans, SPAN_ID_RULE, UNTRUSTED } from './shared';
 
 export const SYSTEM_ATTACK = `You are red-team counsel for a company that wants to defeat the PURPOSE of a law while obeying its exact words.
 Propose concrete schemes a motivated actor could really adopt.
@@ -8,7 +8,8 @@ Rules:
 2. "quotes" must copy words EXACTLY from the <source> spans, with the span id. Never paraphrase. Never quote text that is not there.
 3. Put your legal argument in "whyWordsPermit" and "whyPurposeDefeated".
 4. A scheme that the law's words clearly forbid, or that does not defeat the purpose, is useless. Only propose real gaps.
-${UNTRUSTED}`;
+${UNTRUSTED}
+${SPAN_ID_RULE}`;
 
 const TACTIC_HINTS: Record<Lane, string> = {
   threshold_split: 'Structure the facts so a numeric threshold in a rule is narrowly avoided.',

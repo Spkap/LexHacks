@@ -1,20 +1,19 @@
 {
+  "recordedFrom": {
+    "model": "live pivot-gate run (record-golden.ts), 2026-09-27",
+    "note": "third of three runs; the only one where all three re-attack checks passed"
+  },
   "proposals": [
     {
-      "title": "Add a 'share' definition (CPRA-style)",
+      "title": "Expand definition of “sell” to cover free transfers",
       "redline": [
         {
           "spanId": "S2",
-          "before": "third party for monetary or other valuable consideration.",
-          "after": "third party for monetary or other valuable consideration. \"Share,\" \"shared,\" or \"sharing\" means the same conduct by the business to a third party for cross-context behavioral advertising, whether or not for monetary or other valuable consideration."
-        },
-        {
-          "spanId": "S7",
-          "before": "from selling",
-          "after": "from selling or sharing"
+          "before": "“Sell,” “selling,” “sale,” or “sold,” means selling, renting, releasing, disclosing, disseminating, making available, transferring, or otherwise communicating orally, in writing, or by electronic or other means, a consumer’s personal information by the business to another business or a third party for monetary or other valuable consideration.",
+          "after": "“Sell,” “selling,” “sale,” or “sold,” means selling, renting, releasing, disclosing, disseminating, making available, transferring, or otherwise communicating orally, in writing, or by electronic or other means, a consumer’s personal information by the business to another business or a third party for monetary or other valuable consideration. The term also includes any transfer of a consumer’s personal information to a third party, regardless of whether monetary or other valuable consideration is exchanged, except where such transfer is permitted under the consumer‑directed disclosure exception of section 1798.140(t)(2)(A) or the service‑provider exception of section 1798.140(t)(2)(C)."
         }
       ],
-      "rationale": "Extends the opt-out prohibition to cover disclosures for cross-context behavioral advertising even when no consideration changes hands, closing the free-transfer and barter loopholes without touching the service-provider or consumer-directed exceptions."
+      "rationale": "The current definition of “sell” limits liability to transfers made for monetary or other valuable consideration, allowing businesses to hand off opted‑out consumers' data to ad networks for free. By expanding the definition to include any transfer of personal information to a third party, regardless of consideration, while preserving the consumer‑directed disclosure and service‑provider exceptions, the loophole is closed without prohibiting legitimate uses such as payment processing services or consumer‑requested data sharing."
     }
   ],
   "lazy": {

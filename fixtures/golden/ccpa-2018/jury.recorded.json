@@ -1,5 +1,344 @@
 {
-  "placeholder": true,
-  "recordedFrom": null,
-  "votes": {}
+  "placeholder": false,
+  "recordedFrom": {
+    "model": "live pivot-gate run (record-golden.ts), 2026-09-27",
+    "note": "third of three runs; the only one where all three re-attack checks passed"
+  },
+  "votes": {
+    "C3": [
+      {
+        "judge": "textualist",
+        "quotes": [
+          {
+            "text": "provided that the service provider also does not sell the personal information.",
+            "spanId": "S4"
+          },
+          {
+            "text": "The service provider does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose.",
+            "spanId": "S4"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "The statute does not expressly forbid a business from sharing data with a service provider for the purpose of placing personalized ads for its own products, as long as the provider does not sell the data and only uses it as necessary for that business purpose. Therefore the conduct is not barred by the literal wording (Q1=no). However, the law's purpose is to stop personal information from being used for cross‑context behavioral advertising without consumer consent, even when no money changes hands. Using the data to serve personalized ads on other sites constitutes such cross‑context advertising and defeats that purpose. Consequently the conduct violates the statutory purpose (Q2=yes)."
+      },
+      {
+        "judge": "purposivist",
+        "quotes": [
+          {
+            "text": "The business uses or shares with a service provider personal information of a consumer that is necessary to perform a business purposes if both of the following conditions are met: services that the service provider performs on the business’ behalf, provided that the service provider also does not sell the personal information.",
+            "spanId": "S4"
+          },
+          {
+            "text": "(ii) The service provider does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose.",
+            "spanId": "S4"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "Q1: The statute's language permits sharing personal information with a service provider for any business purpose that is \"necessary\" and expressly only bars the provider from selling the data; it does not prohibit using the data for personalized advertising. Therefore the conduct is not expressly forbidden by the text. Q2: The law's purpose is to stop cross‑context behavioral advertising without consumer consent, even when no money changes hands. Allowing a provider to place personalized ads for the business's own products across other sites directly achieves the prohibited outcome, defeating the statutory purpose. Hence the conduct creates a loophole."
+      },
+      {
+        "judge": "enforcer",
+        "quotes": [
+          {
+            "text": "The business uses or shares with a service provider personal information of a consumer that is necessary to perform a business purposes if both of the following conditions are met: services that the service provider performs on the business’ behalf, provided that the service provider also does not sell the personal information.",
+            "spanId": "S4"
+          },
+          {
+            "text": "(ii) The service provider does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose.",
+            "spanId": "S4"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "The statute’s language permits sharing data with a service provider when the provider does not sell the data and only uses it to perform the business purpose identified by the business (Q1: not forbidden). The identified business purpose—placing personalized ads for the business’s own products on other sites—is a cross‑context behavioral advertising activity performed by a third‑party provider, which the law’s purpose seeks to prevent when a consumer has opted out of sale. Because the conduct enables the consumer’s data to be used for such advertising without additional consent, it defeats the statutory purpose (Q2: yes). Therefore the conduct exploits a loophole in the text."
+      }
+    ],
+    "C4": [
+      {
+        "judge": "textualist",
+        "quotes": [
+          {
+            "text": "(A) Has annual gross revenues in excess of twenty-five million dollars ($25,000,000), as adjusted pursuant to paragraph (5) of subdivision (a) of Section 1798.185.",
+            "spanId": "S1"
+          },
+          {
+            "text": "(B) Alone or in combination, annually buys, receives for the business’ commercial purposes, sells, or shares for commercial purposes, alone or in combination, the personal information of 50,000 or more consumers, households, or devices.",
+            "spanId": "S1"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "The law's prohibition applies only to entities that satisfy the definition of \"Business,\" which requires meeting the revenue threshold in (A). Each affiliate has only $20 million revenue, so it does not meet (A) and thus is not covered by the statute, so the conduct is not forbidden by the text. However, the scheme enables opted‑out consumer data to be shared despite the purpose of preventing such sharing, thereby defeating the law's stated purpose."
+      },
+      {
+        "judge": "purposivist",
+        "quotes": [
+          {
+            "text": "\"Business\" thresholds (A) Has annual gross revenues in excess of twenty-five million dollars ($25,000,000), as adjusted pursuant to paragraph (5) of subdivision (a) of Section 1798.185. (B) Alone or in combination, annually buys, receives for the business’ commercial purposes, sells, or shares for commercial purposes, alone or in combination, the personal information of 50,000 or more consumers, households, or devices. (C) Derives 50 percent or more of its annual revenues from selling consumers’ personal information.",
+            "spanId": "S1"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "The statute defines a \"business\" only when it meets any of the three thresholds in S1. The parent company’s affiliates each have revenue below $25 million and, taken individually, likely do not meet the other thresholds, so the text does not forbid splitting to avoid the definition. However, the purpose is to stop opted‑out consumers' data from reaching third parties for behavioral advertising. By fragmenting operations to stay under the thresholds, the scheme enables the prohibited data flow, thereby defeating the statutory purpose. Consequently, the conduct is not expressly prohibited but undermines the law's intent, constituting a loophole."
+      },
+      {
+        "judge": "enforcer",
+        "quotes": [],
+        "verdict": "unclear",
+        "reasoning": "Judge unavailable."
+      }
+    ],
+    "C5": [
+      {
+        "judge": "textualist",
+        "quotes": [
+          {
+            "text": "An intentional interaction occurs when the consumer intends to interact with the third party, via one or more deliberate interactions.",
+            "spanId": "S3"
+          },
+          {
+            "text": "Hovering over, muting, pausing, or closing a given piece of content does not constitute a consumer’s intent to interact with a third party.",
+            "spanId": "S3"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "Q1: Yes. The statute permits a consumer‑directed disclosure only when the consumer \"intentionally\" discloses or \"intentionally interacts\" via deliberate interactions. The scenario relies on a routine, low‑attention click that is not a deliberate interaction, and the law explicitly excludes such low‑attention actions from constituting intent. Therefore the conduct is not covered by the exception and is forbidden. Q2: Not applicable because the conduct is already prohibited."
+      },
+      {
+        "judge": "purposivist",
+        "quotes": [
+          {
+            "text": "An intentional interaction occurs when the consumer intends to interact with the third party, via one or more deliberate interactions.",
+            "spanId": "S3"
+          },
+          {
+            "text": "Hovering over, muting, pausing, or closing a given piece of content does not constitute a consumer’s intent to interact with a third party.",
+            "spanId": "S3"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "The law permits consumer‑directed disclosure only when the consumer intentionally interacts with a third party via deliberate actions. It explicitly states that low‑attention actions such as hovering, muting, pausing, or closing do not count as intent. A routine click engineered by the business is not a deliberate interaction showing consumer intent, so the conduct falls outside the permitted exception and is therefore forbidden."
+      },
+      {
+        "judge": "enforcer",
+        "quotes": [
+          {
+            "text": "An intentional interaction occurs when the consumer intends to interact with the third party, via one or more deliberate interactions.",
+            "spanId": "S3"
+          },
+          {
+            "text": "Hovering over, muting, pausing, or closing a given piece of content does not constitute a consumer’s intent to interact with a third party.",
+            "spanId": "S3"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "Q1: The statute permits a consumer‑directed disclosure only when the consumer \"intentionally\" discloses or \"intentionally interacts\" with a third party. The law defines intentional interaction as requiring a deliberate act and explicitly states that low‑attention actions such as hovering, muting, pausing, or closing do NOT constitute intent. The scenario relies on a routine, low‑attention click, which the statute treats like those excluded actions, so the conduct does not meet the exception and is therefore prohibited. Q2 is moot because the conduct is already forbidden by the text."
+      }
+    ],
+    "C6": [
+      {
+        "judge": "textualist",
+        "quotes": [
+          {
+            "text": "A business that has received direction from a consumer not to sell the consumer’s personal information ... shall be prohibited ... from selling the consumer’s personal information after its receipt of the consumer’s direction, unless the consumer subsequently provides express authorization for the sale of the consumer’s personal information.",
+            "spanId": "S7"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "Q1: The statute expressly forbids \"selling\" personal information after an opt‑out, but it does not mention \"disclosing\" or \"sharing\" without a sale, so the conduct of merely disclosing to an ad network is not worded as prohibited. Q2: The purpose is to stop opted‑out consumers' data from reaching third parties for advertising without consent; the described delayed disclosures achieve exactly that, thereby defeating the purpose. Hence the conduct exploits a gap between the wording and the purpose."
+      },
+      {
+        "judge": "purposivist",
+        "quotes": [
+          {
+            "text": "A business that has received direction from a consumer not to sell the consumer’s personal information or, in the case of a minor consumer’s personal information has not received consent to sell the minor consumer’s personal information shall be prohibited, pursuant to paragraph (4) of subdivision (a) of Section 1798.135, from selling the consumer’s personal information after its receipt of the consumer’s direction, unless the consumer subsequently provides express authorization for the sale of the consumer’s personal information.",
+            "spanId": "S7"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "Q1: The statute expressly forbids \"selling\" personal information after an opt‑out, not the broader act of \"disclosing\" or sharing it without compensation. Because the conduct described is a disclosure to an ad network without a sale, the statutory language does not directly prohibit it. Q2: The law's purpose is to stop opted‑out consumers' data from reaching third parties for cross‑context behavioral advertising, even when no money changes hands. The described delayed disclosures directly achieve that undesired outcome, thereby defeating the statutory purpose. Hence the conduct exploits a loophole."
+      },
+      {
+        "judge": "enforcer",
+        "quotes": [
+          {
+            "text": "A business that has received direction from a consumer not to sell the consumer’s personal information or, in the case of a minor consumer’s personal information has not received consent to sell the minor consumer’s personal information shall be prohibited, pursuant to paragraph (4) of subdivision (a) of Section 1798.135, from selling the consumer’s personal information after its receipt of the consumer’s direction, unless the consumer subsequently provides express authorization for the sale of the consumer’s personal information.",
+            "spanId": "S7"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "The statute expressly forbids a business from *selling* personal information after receiving an opt‑out direction. The conduct described is a disclosure to an ad network without any indication of a sale or consideration, so the literal wording does not cover it. However, the purpose of the provision is to stop opted‑out consumers' data from reaching third parties for cross‑context advertising without consent, and the described delayed disclosures directly achieve that undesired outcome. Thus the conduct is not prohibited by the text but defeats the statute's purpose."
+      }
+    ],
+    "C1": [
+      {
+        "judge": "textualist",
+        "quotes": [
+          {
+            "text": "“Sell,” “selling,” “sale,” or “sold,” means selling, renting, releasing, disclosing, disseminating, making available, transferring, or otherwise communicating orally, in writing, or by electronic or other means, a consumer’s personal information by the business to another business or a third party for monetary or other valuable consideration.",
+            "spanId": "S2"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "The definition of \"sell\" in S2 requires that the disclosure be for monetary or other valuable consideration. The business gave the consumer's browsing history to the ad network for free, so the conduct does not meet the statutory definition of a sale and is therefore not forbidden by the text. Nonetheless, the law's purpose is to prevent opted‑out consumers' data from reaching third parties for cross‑context behavioral advertising even when no money changes hands. This conduct directly defeats that purpose. Hence the conduct exploits a loophole."
+      },
+      {
+        "judge": "purposivist",
+        "quotes": [
+          {
+            "text": "“Sell,” “selling,” “sale,” or “sold,” means selling, renting, releasing, disclosing, disseminating, making available, transferring, or otherwise communicating orally, in writing, or by electronic or other means, a consumer’s personal information by the business to another business or a third party for monetary or other valuable consideration.",
+            "spanId": "S2"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "The statute defines a \"sell\" only when the consumer's information is transferred to another business for monetary or other valuable consideration. In the scenario the data is given to the ad network for free, so the conduct does not fall within the defined prohibited \"sell\" activity, answering Q1 negatively. However, the purpose explicitly aims to stop data from reaching third parties for cross‑context behavioral advertising even without money changing hands, and the conduct directly achieves that, so it defeats the purpose, answering Q2 positively."
+      },
+      {
+        "judge": "enforcer",
+        "quotes": [
+          {
+            "text": "\"Sell,\" \"selling,\" \"sale,\" or \"sold,\" means selling, renting, releasing, disclosing, disseminating, making available, transferring, or otherwise communicating orally, in writing, or by electronic or other means, a consumer’s personal information by the business to another business or a third party for monetary or other valuable consideration.",
+            "spanId": "S2"
+          }
+        ],
+        "verdict": "loophole",
+        "reasoning": "Q1: The statute defines a \"sell\" only when the disclosure is for monetary or other valuable consideration; the scenario involves a free transfer, so the conduct is not prohibited by the quoted language. Q2: The purpose explicitly aims to stop personal information from reaching third parties even when no money changes hands, and the free transfer directly contravenes that goal. Therefore, the conduct is not forbidden by the text but defeats the statutory purpose. The result is a loophole."
+      }
+    ],
+    "C2": [
+      {
+        "judge": "textualist",
+        "quotes": [
+          {
+            "text": "The business uses or shares with a service provider personal information of a consumer that is necessary to perform a business purposes if both of the following conditions are met:",
+            "spanId": "S4"
+          },
+          {
+            "text": "The service provider does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose.",
+            "spanId": "S4"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "Q1: The law permits sharing with a service provider only when the data is \"necessary to perform a business purpose\" and the provider does not use it beyond that purpose. In the scenario, the ad‑tech partner uses the data for its own advertising, not a business purpose of the original business, violating the necessity requirement and condition (ii). Therefore the conduct is expressly forbidden by the statute. Q2 is moot because the conduct is already prohibited."
+      },
+      {
+        "judge": "purposivist",
+        "quotes": [
+          {
+            "text": "The business uses or shares with a service provider personal information of a consumer that is necessary to perform a business purposes if both of the following conditions are met: services that the service provider performs on the business’ behalf, provided that the service provider also does not sell the personal information.",
+            "spanId": "S4"
+          },
+          {
+            "text": "(ii) The service provider does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose.",
+            "spanId": "S4"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "The scenario gives consumer data to an ad‑tech partner for the partner's own advertising, not for a business purpose of the data‑providing company. Under S4 the sharing is allowed only when the data is \"necessary to perform a business purpose\" and when the provider \"does not further ... use the personal information ... except as necessary to perform the business purpose.\" Both requirements are violated, so the conduct is expressly forbidden by the statute."
+      },
+      {
+        "judge": "enforcer",
+        "quotes": [
+          {
+            "text": "The business uses or shares with a service provider personal information of a consumer that is necessary to perform a business purposes if both of the following conditions are met: services that the service provider performs on the business’ behalf, provided that the service provider also does not sell the personal information.",
+            "spanId": "S4"
+          },
+          {
+            "text": "The service provider does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose.",
+            "spanId": "S4"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "The scenario shares consumer data with an ad‑tech partner that uses the data for its own advertising, not for a business purpose of the sharing business. Condition (ii) of the service‑provider exception requires the provider not to further collect, sell, or use the data except as necessary to perform the business purpose, which is violated. Because the required conditions are not met, the statute does not permit the conduct; thus the words of the law forbid it. Consequently an enforcement action could be brought and would likely succeed."
+      }
+    ],
+    "C7": [
+      {
+        "judge": "textualist",
+        "quotes": [
+          {
+            "text": "\"Sell,\" \"selling,\" \"sale,\" or \"sold,\" means selling, renting, releasing, disclosing, disseminating, making available, transferring, or otherwise communicating orally, in writing, or by electronic or other means, a consumer’s personal information by the business to another business or a third party for monetary or other valuable consideration.",
+            "spanId": "S2"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "The definition of \"sell\" in S2 expressly includes any communication of a consumer’s personal information to another business or third party for \"monetary or other valuable consideration.\" Exchanging the consumer’s data for free analytics tooling is valuable consideration, so the conduct falls within this definition and is therefore prohibited for consumers who have opted out."
+      },
+      {
+        "judge": "purposivist",
+        "quotes": [
+          {
+            "text": "“Sell,” “selling,” “sale,” or “sold,” means selling, renting, releasing, disclosing, disseminating, making available, transferring, or otherwise communicating orally, in writing, or by electronic or other means, a consumer’s personal information by the business to another business or a third party for monetary or other valuable consideration.",
+            "spanId": "S2"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "Q1: Yes. The statute’s definition of “sell” expressly covers any transfer of a consumer’s personal information to another business “for monetary or other valuable consideration.” Exchanging data for free analytics tooling is valuable consideration, so the conduct is a “sell” prohibited for opted‑out consumers. Q2: Not needed because the conduct is already forbidden."
+      },
+      {
+        "judge": "enforcer",
+        "quotes": [
+          {
+            "text": "“Sell,” “selling,” “sale,” or “sold,” means selling, renting, releasing, disclosing, disseminating, making available, transferring, or otherwise communicating orally, in writing, or by electronic or other means, a consumer’s personal information by the business to another business or a third party for monetary or other valuable consideration.",
+            "spanId": "S2"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "The business exchanged the consumer's data for free analytics tooling, which is a non‑monetary but valuable consideration. The definition of “sell” expressly includes any transfer of personal information “for monetary or other valuable consideration.” Therefore the conduct falls within the statutory definition of a sale, which is prohibited for consumers who have opted out. The law’s wording directly forbids this behavior."
+      }
+    ],
+    "C8": [
+      {
+        "judge": "textualist",
+        "quotes": [
+          {
+            "text": "The business uses or shares with a service provider personal information of a consumer that is necessary to perform a business purposes if both of the following conditions are met",
+            "spanId": "S4"
+          },
+          {
+            "text": "(i) The business has provided notice that information being used or shared in its terms and conditions consistent with Section 1798.135.",
+            "spanId": "S4"
+          },
+          {
+            "text": "(ii) The service provider does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose.",
+            "spanId": "S4"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "Q1: Yes. The statute permits sharing with a service provider only when both condition (i) notice is given and condition (ii) the provider does not further use the data; the scenario provides no notice, no contract, and the affiliate uses the data for its own advertising, so the required conditions are not met and the conduct is forbidden. Q2: Not applicable because the conduct is already prohibited, but it would also defeat the law's purpose of preventing cross‑context advertising of opted‑out consumers."
+      },
+      {
+        "judge": "purposivist",
+        "quotes": [
+          {
+            "text": "(i) The business has provided notice that information being used or shared in its terms and conditions consistent with Section 1798.135.",
+            "spanId": "S4"
+          },
+          {
+            "text": "(ii) The service provider does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose.",
+            "spanId": "S4"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "The statute permits sharing with a service provider only when the business gives notice (i) and the provider does not further collect, sell, or use the data beyond the business purpose (ii). The scenario lacks any notice and the affiliate uses the data for its own cross‑context advertising, violating both conditions. Therefore the conduct is expressly forbidden by the language of the law."
+      },
+      {
+        "judge": "enforcer",
+        "quotes": [
+          {
+            "text": "(i) The business has provided notice that information being used or shared in its terms and conditions consistent with Section 1798.135.",
+            "spanId": "S4"
+          },
+          {
+            "text": "(ii) The service provider does not further collect, sell, or use the personal information of the consumer except as necessary to perform the business purpose.",
+            "spanId": "S4"
+          },
+          {
+            "text": "The business uses or shares with a service provider personal information of a consumer that is necessary to perform a business purposes if both of the following conditions are met",
+            "spanId": "S4"
+          }
+        ],
+        "verdict": "blocked",
+        "reasoning": "The scenario lacks the required notice to the consumer and the affiliate uses the data for its own advertising, which is not \"necessary to perform the business purpose\". Both condition (i) and condition (ii) of the service‑provider exception are therefore violated, so the conduct is expressly prohibited by the statute."
+      }
+    ]
+  }
 }
