@@ -60,6 +60,7 @@ export function HeroBattle() {
   return (
     <div
       className="overflow-hidden rounded-lg border border-border/60 bg-ink text-paper"
+      data-testid="hero-battle"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -96,7 +97,7 @@ export function HeroBattle() {
             })}
           </span>
           <div className={animate ? "animate-in fade-in-0 duration-300 delay-500" : ""}>
-            <VerdictStamp status={round.status} />
+            <VerdictStamp status={round.status} dark />
           </div>
         </div>
       </div>

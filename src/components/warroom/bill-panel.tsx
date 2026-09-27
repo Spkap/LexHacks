@@ -24,7 +24,7 @@ function renderRedlinedText(text: string, edits: RepairProposal["redline"], span
 
 export function BillPanel({ spans, activeSpanIds, heatSpanIds, redline }: Props) {
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto bg-paper p-5 text-ink">
+    <div className="flex h-full flex-col gap-4 overflow-y-auto bg-paper p-5 text-ink" tabIndex={0} aria-label="Bill text">
       {spans.map((span) => {
         const isActive = activeSpanIds.includes(span.id);
         const hasHeat = heatSpanIds.includes(span.id);

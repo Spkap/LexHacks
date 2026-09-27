@@ -11,10 +11,11 @@ const STAMP: Record<string, { icon: string; label: string; className: string }> 
   ruled_not_loophole: { icon: "🛡", label: "Ruled not a loophole", className: "text-verified" },
 };
 
-export function VerdictStamp({ status }: { status: CandidateStatus | EffectiveStatus }) {
+export function VerdictStamp({ status, dark = false }: { status: CandidateStatus | EffectiveStatus; dark?: boolean }) {
   const s = STAMP[status] ?? STAMP.generated;
+  const className = dark && (status === "confirmed" || status === "ruled_loophole") ? "font-semibold text-red-300" : s.className;
   return (
-    <span className={`inline-flex items-center gap-1 text-sm ${s.className}`}>
+    <span className={`inline-flex items-center gap-1 text-sm ${className}`}>
       <span aria-hidden>{s.icon}</span>
       {s.label}
     </span>

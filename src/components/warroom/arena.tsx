@@ -47,7 +47,7 @@ export function Arena({ chips, onOpen }: Props) {
             </span>
             <span className="flex shrink-0 items-center gap-3">
               {chip.phase === "judging" || chip.phase === "done" ? <JurySeats chip={chip} /> : null}
-              <VerdictStamp status={chip.status} />
+              <VerdictStamp status={chip.status} dark />
             </span>
           </button>
         </li>

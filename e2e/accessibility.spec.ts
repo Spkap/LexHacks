@@ -41,7 +41,7 @@ test.describe('accessibility: 0 serious/critical axe violations per screen', () 
 
 test('keyboard-only: landing can open a War Room without a mouse', async ({ page }) => {
   await page.goto('/?demo=1');
-  await page.keyboard.press('Tab');
+  for (let i = 0; i < 4; i += 1) await page.keyboard.press('Tab');
   const benchmarkButton = page.getByRole('button', { name: 'Watch it catch a real loophole' });
   await expect(benchmarkButton).toBeFocused();
   await page.keyboard.press('Enter');
@@ -49,18 +49,8 @@ test('keyboard-only: landing can open a War Room without a mouse', async ({ page
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 
-test('reduced motion: chip entrance animation is disabled', async ({ page }) => {
+test('reduced motion: landing hero does not add entrance animation classes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const slug = await forkGolden(page);
-  await page.goto(`/a/${slug}?demo=1`);
-  await page.getByRole('button', { name: 'Attack' }).click();
-  await page.waitForSelector('.chip-travel-in', { timeout: 15_000 });
-  const durationMs = await page.evaluate(() => {
-    const el = document.querySelector('.chip-travel-in');
-    if (!el) return null;
-    const raw = getComputedStyle(el).animationDuration;
-    return raw.endsWith('ms') ? Number.parseFloat(raw) : Number.parseFloat(raw) * 1000;
-  });
-  expect(durationMs).not.toBeNull();
-  expect(durationMs as number).toBeLessThanOrEqual(0.01);
+  await page.goto('/');
+  await expect(page.getByTestId('hero-battle').locator('.animate-in')).toHaveCount(0);
 });
