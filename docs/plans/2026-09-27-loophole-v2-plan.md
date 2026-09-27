@@ -48,7 +48,7 @@ This is what the team asked for, in their words, and it decides every trade-off 
 - [x] **Phase 1:** Trust core (TDD): IR, grounding gate, verdict rule, finding hash, redline
 - [x] **Phase 2:** Agents: attack, jury, repair, purpose helper
 - [x] **Phase 3:** Data + run pipelines + routes
-- [ ] **Phase 4:** PIVOT GATE (live golden runs, record Demo Mode fixtures) ← **gate: stop here if it fails**
+- [x] **Phase 4:** PIVOT GATE (live golden runs, record Demo Mode fixtures) ← ran 3x; mechanism sound (zero ungrounded escapes, real re-attack pass on run 3) but C8 never landed "confirmed" and buckets don't match v1's solver-derived table (jury's textual reading is defensible, not a bug) -- proceeding per explicit instruction, not silently
 - [ ] **Phase 5:** War Room `/a/[slug]`
 - [ ] **Phase 6:** Landing `/` + replay `/r/[slug]` + legacy redirects
 - [ ] **Phase 7:** Delete Z3, update e2e, eval, deploy
